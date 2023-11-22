@@ -33,23 +33,23 @@ module vga #(
     output wire data_enable
 );
 
-  // hdata
-  always @(posedge clk) begin
-    if (hdata == (HMAX - 1)) hdata <= 0;
-    else hdata <= hdata + 1;
-  end
-
-  // vdata
-  always @(posedge clk) begin
-    if (hdata == (HMAX - 1)) begin
-      if (vdata == (VMAX - 1)) vdata <= 0;
-      else vdata <= vdata + 1;
+    // hdata
+    always @(posedge clk) begin
+        if (hdata == (HMAX - 1)) hdata <= 0;
+        else hdata <= hdata + 1;
     end
-  end
 
-  // hsync & vsync & blank
-  assign hsync = ((hdata >= HFP) && (hdata < HSP)) ? HSPP : !HSPP;
-  assign vsync = ((vdata >= VFP) && (vdata < VSP)) ? VSPP : !VSPP;
-  assign data_enable = ((hdata < HSIZE) & (vdata < VSIZE));
+    // vdata
+    always @(posedge clk) begin
+        if (hdata == (HMAX - 1)) begin
+            if (vdata == (VMAX - 1)) vdata <= 0;
+            else vdata <= vdata + 1;
+        end
+    end
+
+    // hsync & vsync & blank
+    assign hsync = ((hdata >= HFP) && (hdata < HSP)) ? HSPP : !HSPP;
+    assign vsync = ((vdata >= VFP) && (vdata < VSP)) ? VSPP : !VSPP;
+    assign data_enable = ((hdata < HSIZE) & (vdata < VSIZE));
 
 endmodule

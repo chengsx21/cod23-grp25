@@ -9,3 +9,4 @@ thinpad_top.sim/
 /.lint/
 /.Xil
 /.Xilinx
+.DS_Store

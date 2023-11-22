@@ -1,58 +1,61 @@
 `default_nettype none
 
-module thinpad_top (
-    input wire clk_50M,     // 50MHz 时钟输入
-    input wire clk_11M0592, // 11.0592MHz 时钟输入（备用，可不用）
+module thinpad_top #(
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 32
+) (
+    input wire clk_50M,     // 50MHz clock input
+    input wire clk_11M0592, // 11.0592MHz clock input
 
-    input wire push_btn,  // BTN5 按钮开关，带消抖电路，按下时为 1
-    input wire reset_btn, // BTN6 复位按钮，带消抖电路，按下时为 1
+    input wire push_btn,  // BTN5 debounced, pressed as signal 1
+    input wire reset_btn, // BTN6 debounced, pressed as signal 1
 
-    input  wire [ 3:0] touch_btn,  // BTN1~BTN4，按钮开关，按下时为 1
-    input  wire [31:0] dip_sw,     // 32 位拨码开关，拨到“ON”时为 1
-    output wire [15:0] leds,       // 16 位 LED，输出时 1 点亮
-    output wire [ 7:0] dpy0,       // 数码管低位信号，包括小数点，输出 1 点亮
-    output wire [ 7:0] dpy1,       // 数码管高位信号，包括小数点，输出 1 点亮
+    input  wire [ 3:0] touch_btn,  // BTN1~BTN4, pressed as signal 1
+    input  wire [ADDR_WIDTH-1:0] dip_sw,     // 32bit DIP switch, set on "ON" as signal 1
+    output wire [15:0] leds,       // 16bit LEDs, light on as signal 1
+    output wire [ 7:0] dpy0,       // 8bit 7-seg-low  display, with dot, light on as signal 1
+    output wire [ 7:0] dpy1,       // 8bit 7-seg-high display, with dot, light on as signal 1
 
-    // CPLD 串口控制器信号
-    output wire uart_rdn,        // 读串口信号，低有效
-    output wire uart_wrn,        // 写串口信号，低有效
-    input  wire uart_dataready,  // 串口数据准备好
-    input  wire uart_tbre,       // 发送数据标志
-    input  wire uart_tsre,       // 数据发送完毕标志
+    // CPLD uart controller
+    output wire uart_rdn,        // read  uart signal, low level effectively
+    output wire uart_wrn,        // write uart signal, low level effectively
+    input  wire uart_dataready,  // uart data ready signal
+    input  wire uart_tbre,       // uart transmit signal
+    input  wire uart_tsre,       // uart transmit ready signal
 
-    // BaseRAM 信号
-    inout wire [31:0] base_ram_data,  // BaseRAM 数据，低 8 位与 CPLD 串口控制器共享
-    output wire [19:0] base_ram_addr,  // BaseRAM 地址
-    output wire [3:0] base_ram_be_n,  // BaseRAM 字节使能，低有效。如果不使用字节使能，请保持为 0
-    output wire base_ram_ce_n,  // BaseRAM 片选，低有效
-    output wire base_ram_oe_n,  // BaseRAM 读使能，低有效
-    output wire base_ram_we_n,  // BaseRAM 写使能，低有效
+    // BaseRAM signal
+    inout wire [ADDR_WIDTH-1:0] base_ram_data,  // BaseRAM data, low 8 bits shared with uart controller
+    output wire [19:0] base_ram_addr,  // BaseRAM address
+    output wire [3:0] base_ram_be_n,  // BaseRAM byte enable signal, low level effectively
+    output wire base_ram_ce_n,  // BaseRAM chip enable signal, low level effectively
+    output wire base_ram_oe_n,  // BaseRAM output enable signal, low level effectively
+    output wire base_ram_we_n,  // BaseRAM write enable signal, low level effectively
 
-    // ExtRAM 信号
-    inout wire [31:0] ext_ram_data,  // ExtRAM 数据
-    output wire [19:0] ext_ram_addr,  // ExtRAM 地址
-    output wire [3:0] ext_ram_be_n,  // ExtRAM 字节使能，低有效。如果不使用字节使能，请保持为 0
-    output wire ext_ram_ce_n,  // ExtRAM 片选，低有效
-    output wire ext_ram_oe_n,  // ExtRAM 读使能，低有效
-    output wire ext_ram_we_n,  // ExtRAM 写使能，低有效
+    // ExtRAM signal
+    inout wire [ADDR_WIDTH-1:0] ext_ram_data,  // ExtRAM data
+    output wire [19:0] ext_ram_addr,  // ExtRAM address
+    output wire [3:0] ext_ram_be_n,  // ExtRAM byte enable signal, low level effectively
+    output wire ext_ram_ce_n,  // ExtRAM chip enable signal, low level effectively
+    output wire ext_ram_oe_n,  // ExtRAM output enable signal, low level effectively
+    output wire ext_ram_we_n,  // ExtRAM write enable signal, low level effectively
 
-    // 直连串口信号
-    output wire txd,  // 直连串口发送端
-    input  wire rxd,  // 直连串口接收端
+    // UART signal
+    output wire txd,  // Uart output signal
+    input  wire rxd,  // Uart input signal
 
-    // Flash 存储器信号，参考 JS28F640 芯片手册
-    output wire [22:0] flash_a,  // Flash 地址，a0 仅在 8bit 模式有效，16bit 模式无意义
-    inout wire [15:0] flash_d,  // Flash 数据
-    output wire flash_rp_n,  // Flash 复位信号，低有效
-    output wire flash_vpen,  // Flash 写保护信号，低电平时不能擦除、烧写
-    output wire flash_ce_n,  // Flash 片选信号，低有效
-    output wire flash_oe_n,  // Flash 读使能信号，低有效
-    output wire flash_we_n,  // Flash 写使能信号，低有效
-    output wire flash_byte_n, // Flash 8bit 模式选择，低有效。在使用 flash 的 16 位模式时请设为 1
+    // Flash Memory signal, follow JS28F640 brochure
+    output wire [22:0] flash_a,  // Flash address, a0 effective in 8bit mode, ineffective in 16bit mode
+    inout wire [15:0] flash_d,  // Flash data
+    output wire flash_rp_n,  // Flash reset, low level effectively
+    output wire flash_vpen,  // Flash write protect, low level effectively, cannot write or erase
+    output wire flash_ce_n,  // Flash chip enable, low level effectively
+    output wire flash_oe_n,  // Flash output enable, low level effectively
+    output wire flash_we_n,  // Flash write enable, low level effectively
+    output wire flash_byte_n, // Flash 8bit mode, low level effectively, set as 1 for 16bit mode
 
-    // USB 控制器信号，参考 SL811 芯片手册
+    // USB controller signal, follow SL811 brochure
     output wire sl811_a0,
-    // inout  wire [7:0] sl811_d,     // USB 数据线与网络控制器的 dm9k_sd[7:0] 共享
+    // inout  wire [7:0] sl811_d,     // USB data bus shared with Network controller signal `dm9k_sd[7:0]`
     output wire sl811_wr_n,
     output wire sl811_rd_n,
     output wire sl811_cs_n,
@@ -61,7 +64,7 @@ module thinpad_top (
     input  wire sl811_intrq,
     input  wire sl811_drq_n,
 
-    // 网络控制器信号，参考 DM9000A 芯片手册
+    // Network controller signal, follow DM9000A brochure
     output wire dm9k_cmd,
     inout wire [15:0] dm9k_sd,
     output wire dm9k_iow_n,
@@ -70,156 +73,662 @@ module thinpad_top (
     output wire dm9k_pwrst_n,
     input wire dm9k_int,
 
-    // 图像输出信号
-    output wire [2:0] video_red,    // 红色像素，3 位
-    output wire [2:0] video_green,  // 绿色像素，3 位
-    output wire [1:0] video_blue,   // 蓝色像素，2 位
-    output wire       video_hsync,  // 行同步（水平同步）信号
-    output wire       video_vsync,  // 场同步（垂直同步）信号
-    output wire       video_clk,    // 像素时钟输出
-    output wire       video_de      // 行数据有效信号，用于区分消隐区
+    // Image output signal
+    output wire [2:0] video_red,    // Red pixel, 3 bits
+    output wire [2:0] video_green,  // Green pixel, 3 bits
+    output wire [1:0] video_blue,   // Blue pixel, 2 bits
+    output wire       video_hsync,  // Horizontal sync signal
+    output wire       video_vsync,  // Vertical sync signal
+    output wire       video_clk,    // Pixel clock output
+    output wire       video_de      // Horizontal data enable signal, used to indicate the valid data
 );
 
-  /* =========== Demo code begin =========== */
+	/* =========== Demo code begin =========== */
 
-  // PLL 分频示例
-  logic locked, clk_10M, clk_20M;
-  pll_example clock_gen (
-      // Clock in ports
-      .clk_in1(clk_50M),  // 外部时钟输入
-      // Clock out ports
-      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设置
-      .clk_out2(clk_20M),  // 时钟输出 2，频率在 IP 配置界面中设置
-      // Status and control signals
-      .reset(reset_btn),  // PLL 复位输入
-      .locked(locked)  // PLL 锁定指示输出，"1"表示时钟稳定，
-                       // 后级电路复位信号应当由它生成（见下）
-  );
+	// PLL frequency divider
+	logic locked, clk_10M, clk_20M;
+	pll_example clock_gen (
+		// Clock in ports
+		.clk_in1(clk_50M),  // Outside clock input
+		// Clock out ports
+		.clk_out1(clk_10M),  // Frequency set in IP config page
+		.clk_out2(clk_20M),  // Frequency set in IP config page
+		// Status and control signals
+		.reset(reset_btn),  // PLL reset
+		.locked(locked)  // PLL lock signal, 1 when stable
+	);
 
-  logic reset_of_clk10M;
-  // 异步复位，同步释放，将 locked 信号转为后级电路的复位 reset_of_clk10M
-  always_ff @(posedge clk_10M or negedge locked) begin
-    if (~locked) reset_of_clk10M <= 1'b1;
-    else reset_of_clk10M <= 1'b0;
-  end
+	logic reset_of_clk10M;
+	// Async reset, sync free, transform locked to reset_of_clk10M
+	always_ff @(posedge clk_10M or negedge locked) begin
+		if (~locked) reset_of_clk10M <= 1'b1;
+		else reset_of_clk10M <= 1'b0;
+	end
 
-  always_ff @(posedge clk_10M or posedge reset_of_clk10M) begin
-    if (reset_of_clk10M) begin
-      // Your Code
-    end else begin
-      // Your Code
-    end
-  end
+	assign uart_rdn = 1'b1;
+	assign uart_wrn = 1'b1;
 
-  // 不使用内存、串口时，禁用其使能信号
-  assign base_ram_ce_n = 1'b1;
-  assign base_ram_oe_n = 1'b1;
-  assign base_ram_we_n = 1'b1;
+	//* =========== Demo code end =========== *//
 
-  assign ext_ram_ce_n = 1'b1;
-  assign ext_ram_oe_n = 1'b1;
-  assign ext_ram_we_n = 1'b1;
+	//* ================= IF ================= *//
 
-  assign uart_rdn = 1'b1;
-  assign uart_wrn = 1'b1;
+	logic pc_stall;
+	logic [ADDR_WIDTH-1:0] if_pc;
+	logic [ADDR_WIDTH-1:0] if_pc_next;
 
-  // 数码管连接关系示意图，dpy1 同理
-  // p=dpy0[0] // ---a---
-  // c=dpy0[1] // |     |
-  // d=dpy0[2] // f     b
-  // e=dpy0[3] // |     |
-  // b=dpy0[4] // ---g---
-  // a=dpy0[5] // |     |
-  // f=dpy0[6] // e     c
-  // g=dpy0[7] // |     |
-  //           // ---d---  p
+	if_pc_reg if_pc_reg (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.pc_stall_i(pc_stall),
+		.pc_next_i(if_pc_next),
+		.pc_current_o(if_pc)
+    );
 
-  // 7 段数码管译码器演示，将 number 用 16 进制显示在数码管上面
-  logic [7:0] number;
-  SEG7_LUT segL (
-      .oSEG1(dpy0),
-      .iDIG (number[3:0])
-  );  // dpy0 是低位数码管
-  SEG7_LUT segH (
-      .oSEG1(dpy1),
-      .iDIG (number[7:4])
-  );  // dpy1 是高位数码管
+	logic [DATA_WIDTH-1:0] exe_alu_y;
+	logic pc_sel;
 
-  logic [15:0] led_bits;
-  assign leds = led_bits;
+	if_pc_mux if_pc_mux (
+		.alu_y_i(exe_alu_y),
+		.pc_current_i(if_pc),
+		.pc_sel_i(pc_sel),
+		.pc_next_o(if_pc_next)
+    );
 
-  always_ff @(posedge push_btn or posedge reset_btn) begin
-    if (reset_btn) begin  // 复位按下，设置 LED 为初始值
-      led_bits <= 16'h1;
-    end else begin  // 每次按下按钮开关，LED 循环左移
-      led_bits <= {led_bits[14:0], led_bits[15]};
-    end
-  end
+	logic [DATA_WIDTH-1:0] if_inst;
+	logic im_ready;
 
-  // 直连串口接收发送演示，从直连串口收到的数据再发送出去
-  logic [7:0] ext_uart_rx;
-  logic [7:0] ext_uart_buffer, ext_uart_tx;
-  logic ext_uart_ready, ext_uart_clear, ext_uart_busy;
-  logic ext_uart_start, ext_uart_avai;
+	logic wb0_cyc_o;
+	logic wb0_stb_o;
+	logic wb0_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_sel_o;
+	logic wb0_we_o;
 
-  assign number = ext_uart_buffer;
+	if_im_master if_im_master (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.pc_i(if_pc),
+		.pc_sel_i(pc_sel),
+		.inst_o(if_inst),
+		.im_ready_o(im_ready),
 
-  // 接收模块，9600 无检验位
-  async_receiver #(
-      .ClkFrequency(50000000),
-      .Baud(9600)
-  ) ext_uart_r (
-      .clk           (clk_50M),         // 外部时钟信号
-      .RxD           (rxd),             // 外部串行信号输入
-      .RxD_data_ready(ext_uart_ready),  // 数据接收到标志
-      .RxD_clear     (ext_uart_clear),  // 清除接收标志
-      .RxD_data      (ext_uart_rx)      // 接收到的一字节数据
-  );
+		.wb_cyc_o(wb0_cyc_o),
+		.wb_stb_o(wb0_stb_o),
+		.wb_ack_i(wb0_ack_i),
+		.wb_adr_o(wb0_adr_o),
+		.wb_dat_o(wb0_dat_o),
+		.wb_dat_i(wb0_dat_i),
+		.wb_sel_o(wb0_sel_o),
+		.wb_we_o(wb0_we_o)
+	);
 
-  assign ext_uart_clear = ext_uart_ready; // 收到数据的同时，清除标志，因为数据已取到 ext_uart_buffer 中
-  always_ff @(posedge clk_50M) begin  // 接收到缓冲区 ext_uart_buffer
-    if (ext_uart_ready) begin
-      ext_uart_buffer <= ext_uart_rx;
-      ext_uart_avai   <= 1;
-    end else if (!ext_uart_busy && ext_uart_avai) begin
-      ext_uart_avai <= 0;
-    end
-  end
-  always_ff @(posedge clk_50M) begin  // 将缓冲区 ext_uart_buffer 发送出去
-    if (!ext_uart_busy && ext_uart_avai) begin
-      ext_uart_tx <= ext_uart_buffer;
-      ext_uart_start <= 1;
-    end else begin
-      ext_uart_start <= 0;
-    end
-  end
+	//* =============== IF-ID =============== *//
 
-  // 发送模块，9600 无检验位
-  async_transmitter #(
-      .ClkFrequency(50000000),
-      .Baud(9600)
-  ) ext_uart_t (
-      .clk      (clk_50M),         // 外部时钟信号
-      .TxD      (txd),             // 串行信号输出
-      .TxD_busy (ext_uart_busy),   // 发送器忙状态指示
-      .TxD_start(ext_uart_start),  // 开始发送信号
-      .TxD_data (ext_uart_tx)      // 待发送的数据
-  );
+	logic if_id_stall;
+	logic if_id_bubble;
 
-  // 图像输出演示，分辨率 800x600@75Hz，像素时钟为 50MHz
-  logic [11:0] hdata;
-  assign video_red   = hdata < 266 ? 3'b111 : 0;  // 红色竖条
-  assign video_green = hdata < 532 && hdata >= 266 ? 3'b111 : 0;  // 绿色竖条
-  assign video_blue  = hdata >= 532 ? 2'b11 : 0;  // 蓝色竖条
-  assign video_clk   = clk_50M;
-  vga #(12, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
-      .clk        (clk_50M),
-      .hdata      (hdata),        // 横坐标
-      .vdata      (),             // 纵坐标
-      .hsync      (video_hsync),
-      .vsync      (video_vsync),
-      .data_enable(video_de)
-  );
-  /* =========== Demo code end =========== */
+	logic [ADDR_WIDTH-1:0] id_pc;
+	logic [DATA_WIDTH-1:0] id_inst;
+
+	if_id_regs if_id_regs (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.stall_i(if_id_stall),
+		.bubble_i(if_id_bubble),
+
+		// [ID] ~ [EXE]
+		.inst_i(if_inst),
+		.inst_o(id_inst),
+
+		// [EXE] ~ [MEM]
+		.pc_i(if_pc),
+		.pc_o(id_pc)
+    );
+
+	//* ================= ID ================= *//
+
+	logic [4:0] id_rs1;
+	logic [4:0] id_rs2;
+
+	logic id_br_op;
+	logic [1:0] id_alu_a_mux_sel;
+	logic [1:0] id_alu_b_mux_sel;
+	logic [3:0] id_alu_op;
+
+	logic id_dm_en;
+	logic id_dm_we;
+	logic [2:0] id_dm_dat_width;
+	logic [1:0] id_writeback_mux_sel;
+
+	logic [4:0] id_rd;
+	logic id_reg_we;
+
+
+ 	id_decoder id_decoder (
+		.inst_i(id_inst),
+
+		// [ID] ~ [EXE]
+		.rs1_o(id_rs1),
+		.rs2_o(id_rs2),
+
+		.br_op_o(id_br_op),
+		.alu_a_mux_sel_o(id_alu_a_mux_sel),
+		.alu_b_mux_sel_o(id_alu_b_mux_sel),
+		.alu_op_o(id_alu_op),
+
+		// [EXE] ~ [MEM]
+		.dm_en_o(id_dm_en),
+		.dm_we_o(id_dm_we),
+		.dm_dat_width_o(id_dm_dat_width),
+		.writeback_mux_sel_o(id_writeback_mux_sel),
+
+		// [MEM] ~ [WRITEBACK]
+		.rd_o(id_rd),
+		.reg_we_o(id_reg_we)
+    );
+
+	logic [DATA_WIDTH-1:0] id_imm;
+
+	id_imm_gen id_imm_gen (
+		.inst_i(id_inst),
+		.imm_o(id_imm)
+	);
+
+	logic writeback_reg_we;
+	logic [4:0] writeback_rd;
+	logic [DATA_WIDTH-1:0] writeback_reg_dat;
+	logic [DATA_WIDTH-1:0] id_rs1_dat;
+	logic [DATA_WIDTH-1:0] id_rs2_dat;
+
+	id_reg_file id_reg_file (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+
+		.we_i(writeback_reg_we),
+		.waddr_i(writeback_rd),
+		.wdata_i(writeback_reg_dat),
+		.raddr_a_i(id_rs1),
+		.rdata_a_o(id_rs1_dat),
+		.raddr_b_i(id_rs2),
+		.rdata_b_o(id_rs2_dat)
+	);
+
+
+	//* =============== ID-EXE =============== *//
+
+	logic id_exe_stall;
+	logic id_exe_bubble;
+
+	logic [ADDR_WIDTH-1:0] exe_pc;
+	logic [DATA_WIDTH-1:0] exe_inst;
+	logic [DATA_WIDTH-1:0] exe_imm;
+	logic [4:0] exe_rs1;
+	logic [4:0] exe_rs2;
+
+	logic [DATA_WIDTH-1:0] exe_rs1_dat;
+	logic [DATA_WIDTH-1:0] exe_rs2_dat;
+
+	logic exe_br_op;
+	logic [1:0] exe_alu_a_mux_sel;
+	logic [1:0] exe_alu_b_mux_sel;
+	logic [3:0] exe_alu_op;
+
+	logic exe_dm_en;
+	logic exe_dm_we;
+	logic [2:0] exe_dm_dat_width;
+	logic [1:0] exe_writeback_mux_sel;
+
+	logic [4:0] exe_rd;
+	logic exe_reg_we;
+
+	id_exe_regs id_exe_regs (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.stall_i(id_exe_stall),
+		.bubble_i(id_exe_bubble),
+
+		// [ID] ~ [EXE]
+		.inst_i(id_inst),
+		.inst_o(exe_inst),
+		.imm_i(id_imm),
+		.imm_o(exe_imm),
+		.rs1_i(id_rs1),
+		.rs1_o(exe_rs1),
+		.rs2_i(id_rs2),
+		.rs2_o(exe_rs2),
+
+		.rs1_dat_i(id_rs1_dat),
+		.rs1_dat_o(exe_rs1_dat),
+		.br_op_i(id_br_op),
+		.br_op_o(exe_br_op),
+		.alu_a_mux_sel_i(id_alu_a_mux_sel),
+		.alu_a_mux_sel_o(exe_alu_a_mux_sel),
+		.alu_b_mux_sel_i(id_alu_b_mux_sel),
+		.alu_b_mux_sel_o(exe_alu_b_mux_sel),
+		.alu_op_i(id_alu_op),
+		.alu_op_o(exe_alu_op),
+
+		// [EXE] ~ [MEM]
+		.pc_i(id_pc),
+		.pc_o(exe_pc),
+		.rs2_dat_i(id_rs2_dat),
+		.rs2_dat_o(exe_rs2_dat),
+		.dm_en_i(id_dm_en),
+		.dm_en_o(exe_dm_en),
+		.dm_we_i(id_dm_we),
+		.dm_we_o(exe_dm_we),
+		.dm_dat_width_i(id_dm_dat_width),
+		.dm_dat_width_o(exe_dm_dat_width),
+		.writeback_mux_sel_i(id_writeback_mux_sel),
+		.writeback_mux_sel_o(exe_writeback_mux_sel),
+
+		// [MEM] ~ [WRITEBACK]
+		.rd_i(id_rd),
+		.rd_o(exe_rd),
+		.reg_we_i(id_reg_we),
+		.reg_we_o(exe_reg_we)
+	);
+
+	//* ================= EXE ================= *//
+
+	logic exe_br_cond;
+
+	exe_b_comp exe_b_comp (
+		.rs1_dat_i(exe_rs1_dat),
+		.rs2_dat_i(exe_rs2_dat),
+		.br_op_i(exe_br_op),
+		.br_cond_o(exe_br_cond)
+    );
+
+	logic [DATA_WIDTH-1:0] exe_alu_a;
+
+	exe_alu_a_mux exe_alu_a_mux (
+		.rs1_dat_i(exe_rs1_dat),
+		.pc_i(exe_pc),
+		.alu_a_sel_i(exe_alu_a_mux_sel),
+		.alu_a_o(exe_alu_a)
+    );
+
+	logic [DATA_WIDTH-1:0] exe_alu_b;
+
+	exe_alu_b_mux exe_alu_b_mux (
+		.rs2_dat_i(exe_rs2_dat),
+		.imm_i(exe_imm),
+		.alu_b_sel_i(exe_alu_b_mux_sel),
+		.alu_b_o(exe_alu_b)
+    );
+
+	exe_alu exe_alu (
+		.a_i(exe_alu_a),
+		.b_i(exe_alu_b),
+		.op_i(exe_alu_op),
+		.y_i(exe_alu_y)
+    );
+
+	//* =============== EXE-MEM =============== *//
+
+	logic exe_mem_stall;
+	logic exe_mem_bubble;
+
+	logic [ADDR_WIDTH-1:0] mem_pc;
+	logic [DATA_WIDTH-1:0] mem_alu_y;
+	logic [DATA_WIDTH-1:0] mem_rs2_dat;
+	logic mem_dm_en;
+	logic mem_dm_we;
+	logic [2:0] mem_dm_dat_width;
+	logic [1:0] mem_writeback_mux_sel;
+
+	logic [4:0] mem_rd;
+	logic mem_reg_we;
+
+	exe_mem_regs exe_mem_regs (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.stall_i(exe_mem_stall),
+		.bubble_i(exe_mem_bubble),
+
+		// [EXE] ~ [MEM]
+		.pc_i(exe_pc),
+		.pc_o(mem_pc),
+		.alu_y_i(exe_alu_y),
+    	.alu_y_o(mem_alu_y),
+		.rs2_dat_i(exe_rs2_dat),
+		.rs2_dat_o(mem_rs2_dat),
+		.dm_en_i(exe_dm_en),
+		.dm_en_o(mem_dm_en),
+		.dm_we_i(exe_dm_we),
+		.dm_we_o(mem_dm_we),
+		.dm_dat_width_i(exe_dm_dat_width),
+		.dm_dat_width_o(mem_dm_dat_width),
+		.writeback_mux_sel_i(exe_writeback_mux_sel),
+		.writeback_mux_sel_o(mem_writeback_mux_sel),
+
+		// [MEM] ~ [WRITEBACK]
+		.rd_i(exe_rd),
+		.rd_o(mem_rd),
+		.reg_we_i(exe_reg_we),
+		.reg_we_o(mem_reg_we)
+	);
+
+	//* ================= MEM ================= *//
+
+	logic [DATA_WIDTH-1:0] mem_dm_dat;
+	logic dm_ready;
+
+	logic wb1_cyc_o;
+	logic wb1_stb_o;
+	logic wb1_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_sel_o;
+	logic wb1_we_o;
+
+	mem_dm_master mem_dm_master (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.dm_en_i(mem_dm_en),
+		.dm_we_i(mem_dm_we),
+		.dm_dat_width_i(mem_dm_dat_width),
+		.dm_adr_i(mem_alu_y),
+		.dm_dat_i(mem_rs2_dat),
+		.dm_dat_o(mem_dm_dat),
+		.dm_ready_o(dm_ready),
+
+		.wb_cyc_o(wb1_cyc_o),
+		.wb_stb_o(wb1_stb_o),
+		.wb_ack_i(wb1_ack_i),
+		.wb_adr_o(wb1_adr_o),
+		.wb_dat_o(wb1_dat_o),
+		.wb_dat_i(wb1_dat_i),
+		.wb_sel_o(wb1_sel_o),
+		.wb_we_o(wb1_we_o)
+    );
+
+	logic [DATA_WIDTH-1:0] mem_reg_dat;
+
+	mem_writeback_mux mem_writeback_mux (
+		.dm_dat_i(mem_dm_dat),
+		.alu_y_i(mem_alu_y),
+		.pc_i(mem_pc),
+		.writeback_mux_sel_i(mem_writeback_mux_sel),
+		.writeback_mux_o(mem_reg_dat)
+    );
+
+	//* =============== MEM-WB =============== *//
+
+	logic mem_writeback_stall;
+	logic mem_writeback_bubble;
+
+	mem_writeback_regs mem_writeback_regs (
+		.clk_i(clk_10M),
+		.rst_i(reset_of_clk10M),
+		.stall_i(mem_writeback_stall),
+		.bubble_i(mem_writeback_bubble),
+
+		// [MEM] ~ [WRITEBACK]
+		.writeback_data_i(mem_reg_dat),
+		.writeback_data_o(writeback_reg_dat),
+		.rd_i(mem_rd),
+		.rd_o(writeback_rd),
+		.reg_we_i(mem_reg_we),
+		.reg_we_o(writeback_reg_we)
+	);
+
+	//* ================ HAZARD ================ *//
+
+	hazard_controller hazard_controller (
+		.im_ready_i(im_ready),
+		.dm_ready_i(dm_ready),
+
+		.id_rs1_i(id_rs1),
+		.id_rs2_i(id_rs2),
+		.exe_rd_i(exe_rd),
+		.mem_rd_i(mem_rd),
+		.writeback_rd_i(writeback_rd),
+
+		.br_cond_i(exe_br_cond),
+		.exe_reg_we_i(exe_reg_we),
+		.mem_reg_we_i(mem_reg_we),
+		.writeback_reg_we_i(writeback_reg_we),
+
+		.if_pc_i(if_pc),
+		.id_pc_i(id_pc),
+		.exe_pc_i(exe_pc),
+		.alu_y_i(exe_alu_y),
+
+		.pc_sel_o(pc_sel),
+		.pc_stall_o(pc_stall),
+		.if_id_stall_o(if_id_stall),
+		.if_id_bubble_o(if_id_bubble),
+		.id_exe_stall_o(id_exe_stall),
+		.id_exe_bubble_o(id_exe_bubble),
+		.exe_mem_stall_o(exe_mem_stall),
+		.exe_mem_bubble_o(exe_mem_bubble),
+		.mem_wb_stall_o(mem_writeback_stall),
+		.mem_wb_bubble_o(mem_writeback_bubble)
+	);
+
+	//* ================ ARBITER ================ *//
+	//* ========== 0 <-> DM, 1 <-> IM =========== *//
+
+	logic [ADDR_WIDTH-1:0] wbs_adr_o;
+    logic [DATA_WIDTH-1:0] wbs_dat_i;
+    logic [DATA_WIDTH-1:0] wbs_dat_o;
+    logic wbs_we_o;
+    logic [3:0] wbs_sel_o;
+    logic wbs_stb_o;
+    logic wbs_ack_i;
+    logic wbs_err_i;
+    logic wbs_rty_i;
+    logic wbs_cyc_o;
+
+    wb_arbiter_2 wb_arbiter_2 (
+        .clk(clk_10M),
+        .rst(reset_of_clk10M),
+
+        .wbm0_adr_i(wb0_adr_o),
+        .wbm0_dat_i(wb0_dat_o),
+        .wbm0_dat_o(wb0_dat_i),
+        .wbm0_we_i(wb0_we_o),
+        .wbm0_sel_i(wb0_sel_o),
+        .wbm0_stb_i(wb0_stb_o),
+        .wbm0_ack_o(wb0_ack_i),
+        .wbm0_err_o(),
+        .wbm0_rty_o(),
+        .wbm0_cyc_i(wb0_cyc_o),
+        
+        .wbm1_adr_i(wb1_adr_o),
+        .wbm1_dat_i(wb1_dat_o),
+        .wbm1_dat_o(wb1_dat_i),
+        .wbm1_we_i(wb1_we_o),
+        .wbm1_sel_i(wb1_sel_o),
+        .wbm1_stb_i(wb1_stb_o),
+        .wbm1_ack_o(wb1_ack_i),
+        .wbm1_err_o(),
+        .wbm1_rty_o(),
+        .wbm1_cyc_i(wb1_cyc_o),
+
+        .wbs_adr_o(wbs_adr_o),
+        .wbs_dat_i(wbs_dat_o),
+        .wbs_dat_o(wbs_dat_i),
+        .wbs_we_o(wbs_we_o),
+        .wbs_sel_o(wbs_sel_o),
+        .wbs_stb_o(wbs_stb_o),
+        .wbs_ack_i(wbs_ack_i),
+        .wbs_err_i(wbs_err_i),
+        .wbs_rty_i(wbs_rty_i),
+        .wbs_cyc_o(wbs_cyc_o)
+    );
+
+	//* ================ WB_MUX ================ *//
+
+    logic wbs0_cyc_o;
+    logic wbs0_stb_o;
+    logic wbs0_ack_i;
+    logic [ADDR_WIDTH-1:0] wbs0_adr_o;
+    logic [DATA_WIDTH-1:0] wbs0_dat_o;
+    logic [DATA_WIDTH-1:0] wbs0_dat_i;
+    logic [3:0] wbs0_sel_o;
+    logic wbs0_we_o;
+
+    logic wbs1_cyc_o;
+    logic wbs1_stb_o;
+    logic wbs1_ack_i;
+    logic [ADDR_WIDTH-1:0] wbs1_adr_o;
+    logic [DATA_WIDTH-1:0] wbs1_dat_o;
+    logic [DATA_WIDTH-1:0] wbs1_dat_i;
+    logic [3:0] wbs1_sel_o;
+    logic wbs1_we_o;
+
+    logic wbs2_cyc_o;
+    logic wbs2_stb_o;
+    logic wbs2_ack_i;
+    logic [ADDR_WIDTH-1:0] wbs2_adr_o;
+    logic [DATA_WIDTH-1:0] wbs2_dat_o;
+    logic [DATA_WIDTH-1:0] wbs2_dat_i;
+    logic [3:0] wbs2_sel_o;
+    logic wbs2_we_o;
+
+    wb_mux_3 wb_mux_3 (
+        .clk(clk_10M),
+        .rst(reset_of_clk10M),
+
+        .wbm_adr_i(wbs_adr_o),
+        .wbm_dat_i(wbs_dat_i),
+        .wbm_dat_o(wbs_dat_o),
+        .wbm_we_i (wbs_we_o),
+        .wbm_sel_i(wbs_sel_o),
+        .wbm_stb_i(wbs_stb_o),
+        .wbm_ack_o(wbs_ack_i),
+        .wbm_err_o(),
+        .wbm_rty_o(),
+        .wbm_cyc_i(wbs_cyc_o),
+
+        // Slave interface 0 (to BaseRAM controller)
+        // Address range: 0x8000_0000 ~ 0x803F_FFFF
+        .wbs0_addr    (32'h8000_0000),
+        .wbs0_addr_msk(32'hFFC0_0000),
+
+        .wbs0_adr_o(wbs0_adr_o),
+        .wbs0_dat_i(wbs0_dat_i),
+        .wbs0_dat_o(wbs0_dat_o),
+        .wbs0_we_o (wbs0_we_o),
+        .wbs0_sel_o(wbs0_sel_o),
+        .wbs0_stb_o(wbs0_stb_o),
+        .wbs0_ack_i(wbs0_ack_i),
+        .wbs0_err_i('0),
+        .wbs0_rty_i('0),
+        .wbs0_cyc_o(wbs0_cyc_o),
+
+        // Slave interface 1 (to ExtRAM controller)
+        // Address range: 0x8040_0000 ~ 0x807F_FFFF
+        .wbs1_addr    (32'h8040_0000),
+        .wbs1_addr_msk(32'hFFC0_0000),
+
+        .wbs1_adr_o(wbs1_adr_o),
+        .wbs1_dat_i(wbs1_dat_i),
+        .wbs1_dat_o(wbs1_dat_o),
+        .wbs1_we_o (wbs1_we_o),
+        .wbs1_sel_o(wbs1_sel_o),
+        .wbs1_stb_o(wbs1_stb_o),
+        .wbs1_ack_i(wbs1_ack_i),
+        .wbs1_err_i('0),
+        .wbs1_rty_i('0),
+        .wbs1_cyc_o(wbs1_cyc_o),
+
+        // Slave interface 2 (to UART controller)
+        // Address range: 0x1000_0000 ~ 0x1000_FFFF
+        .wbs2_addr    (32'h1000_0000),
+        .wbs2_addr_msk(32'hFFFF_0000),
+
+        .wbs2_adr_o(wbs2_adr_o),
+        .wbs2_dat_i(wbs2_dat_i),
+        .wbs2_dat_o(wbs2_dat_o),
+        .wbs2_we_o (wbs2_we_o),
+        .wbs2_sel_o(wbs2_sel_o),
+        .wbs2_stb_o(wbs2_stb_o),
+        .wbs2_ack_i(wbs2_ack_i),
+        .wbs2_err_i('0),
+        .wbs2_rty_i('0),
+        .wbs2_cyc_o(wbs2_cyc_o)
+    );
+
+	//* =============== WB_SLAVE =============== *//
+
+    sram_controller #(
+        .SRAM_ADDR_WIDTH(20),
+        .SRAM_DATA_WIDTH(32)
+    ) sram_controller_base (
+        .clk_i(clk_10M),
+        .rst_i(reset_of_clk10M),
+
+        // Wishbone slave (to MUX)
+        .wb_cyc_i(wbs0_cyc_o),
+        .wb_stb_i(wbs0_stb_o),
+        .wb_ack_o(wbs0_ack_i),
+        .wb_adr_i(wbs0_adr_o),
+        .wb_dat_i(wbs0_dat_o),
+        .wb_dat_o(wbs0_dat_i),
+        .wb_sel_i(wbs0_sel_o),
+        .wb_we_i (wbs0_we_o),
+
+        // To SRAM chip
+        .sram_addr(base_ram_addr),
+        .sram_data(base_ram_data),
+        .sram_ce_n(base_ram_ce_n),
+        .sram_oe_n(base_ram_oe_n),
+        .sram_we_n(base_ram_we_n),
+        .sram_be_n(base_ram_be_n)
+    );
+
+    sram_controller #(
+        .SRAM_ADDR_WIDTH(20),
+        .SRAM_DATA_WIDTH(32)
+    ) sram_controller_ext (
+        .clk_i(clk_10M),
+        .rst_i(reset_of_clk10M),
+
+        // Wishbone slave (to MUX)
+        .wb_cyc_i(wbs1_cyc_o),
+        .wb_stb_i(wbs1_stb_o),
+        .wb_ack_o(wbs1_ack_i),
+        .wb_adr_i(wbs1_adr_o),
+        .wb_dat_i(wbs1_dat_o),
+        .wb_dat_o(wbs1_dat_i),
+        .wb_sel_i(wbs1_sel_o),
+        .wb_we_i (wbs1_we_o),
+
+        // To SRAM chip
+        .sram_addr(ext_ram_addr),
+        .sram_data(ext_ram_data),
+        .sram_ce_n(ext_ram_ce_n),
+        .sram_oe_n(ext_ram_oe_n),
+        .sram_we_n(ext_ram_we_n),
+        .sram_be_n(ext_ram_be_n)
+    );
+
+    uart_controller #(
+        .CLK_FREQ(10_000_000),
+        .BAUD    (115200)
+    ) uart_controller (
+        .clk_i(clk_10M),
+        .rst_i(reset_of_clk10M),
+
+        .wb_cyc_i(wbs2_cyc_o),
+        .wb_stb_i(wbs2_stb_o),
+        .wb_ack_o(wbs2_ack_i),
+        .wb_adr_i(wbs2_adr_o),
+        .wb_dat_i(wbs2_dat_o),
+        .wb_dat_o(wbs2_dat_i),
+        .wb_sel_i(wbs2_sel_o),
+        .wb_we_i (wbs2_we_o),
+
+        // to UART pins
+        .uart_txd_o(txd),
+        .uart_rxd_i(rxd)
+    );
 
 endmodule

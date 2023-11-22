@@ -31,6 +31,94 @@ module sram_controller #(
     output reg [SRAM_BYTES-1:0] sram_be_n
 );
 
-  // TODO: 实现 SRAM 控制器
+	// state machine
+	typedef enum logic [2:0] {
+		ST_IDLE,
+		ST_READ_1,
+		ST_READ_2,
+		ST_WRITE_1,
+		ST_WRITE_2,
+		ST_WRITE_3,
+		ST_DONE
+	} state_t;
+	state_t state;
+
+	wire [31:0] sram_data_i_comb;
+	reg [31:0] sram_data_o_comb;
+	reg sram_data_t_comb;
+	assign sram_data = sram_data_t_comb ? 32'bz : sram_data_o_comb;
+	assign sram_data_i_comb = sram_data;
+
+  	always_ff @(posedge clk_i) begin
+		if (rst_i) begin
+			sram_ce_n <= 1'b1;
+			sram_oe_n <= 1'b1;
+			sram_we_n <= 1'b1;
+			wb_ack_o <= 1'b0;
+			state <= ST_IDLE;
+		end
+    	else begin
+			case (state)
+				ST_IDLE: begin
+					// wait for valid wishbone request
+					if (wb_cyc_i && wb_stb_i) begin
+						sram_ce_n <= 1'b0;
+						sram_we_n <= 1'b1;
+						sram_be_n <= ~wb_sel_i;
+						sram_addr <= (wb_adr_i >> 2);
+						if (wb_we_i) begin // write
+							sram_oe_n <= 1'b1;
+							sram_data_t_comb <= 1'b0;
+							sram_data_o_comb <= wb_dat_i;
+							state <= ST_WRITE_1;
+						end else begin // read
+							sram_oe_n <= 1'b0;
+							sram_data_t_comb <= 1'b1;
+							state <= ST_READ_1;
+						end
+					end
+				end
+
+				ST_READ_1: begin
+					// wait for read data to be ready
+					state <= ST_READ_2;
+				end
+
+				ST_READ_2: begin
+					// read data from sram and send to wishbone
+					wb_dat_o <= sram_data_i_comb;
+					sram_ce_n <= 1'b1;
+					sram_oe_n <= 1'b1;
+					wb_ack_o <= 1'b1;
+					state <= ST_DONE;
+				end
+
+				ST_WRITE_1: begin
+					// wait for write data to be ready
+					sram_we_n <= 1'b0;
+					state <= ST_WRITE_2;
+				end
+
+				ST_WRITE_2: begin
+					// compute correct write data
+					sram_we_n <= 1'b1;
+					state <= ST_WRITE_3;
+				end
+
+				ST_WRITE_3: begin
+					// write data to sram
+					sram_ce_n <= 1'b1;
+					wb_ack_o <= 1'b1;
+					state <= ST_DONE;
+				end
+
+				ST_DONE: begin
+					// wait for wishbone to deassert
+					wb_ack_o <= 1'b0;
+					state <= ST_IDLE;
+				end
+			endcase
+    	end
+  	end
 
 endmodule
