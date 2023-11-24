@@ -19,8 +19,8 @@ module id_exe_regs #(
 
     input wire [DATA_WIDTH-1:0] rs1_dat_i,
     output logic [DATA_WIDTH-1:0] rs1_dat_o,
-    input wire br_op_i,
-    output logic br_op_o,
+    input wire [1:0] br_op_i,
+    output logic [1:0] br_op_o,
     input wire [1:0] alu_a_mux_sel_i,
     output logic [1:0] alu_a_mux_sel_o,
     input wire [1:0] alu_b_mux_sel_i,

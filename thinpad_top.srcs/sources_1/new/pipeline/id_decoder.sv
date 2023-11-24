@@ -8,7 +8,7 @@ module id_decoder #(
     output logic [4:0] rs1_o,
     output logic [4:0] rs2_o,
 
-    output logic br_op_o,
+    output logic [1:0] br_op_o,
     output logic [1:0] alu_a_mux_sel_o, // 0 For Rs1, 1 For PC, 2 For Zero
     output logic [1:0] alu_b_mux_sel_o, // 0 For Rs2, 1 For Imm, 2 For Zero
     output logic [3:0] alu_op_o,
@@ -163,7 +163,7 @@ module id_decoder #(
     end
 
     always_comb begin
-        br_op_o = 1'b0;
+        br_op_o = 2'b00;
         alu_a_mux_sel_o = 2'b10;
         alu_b_mux_sel_o = 2'b10;
         alu_op_o = 4'b0000;
@@ -177,7 +177,7 @@ module id_decoder #(
 
         case (op)
             ADD: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b0001;
@@ -191,7 +191,7 @@ module id_decoder #(
             end
 
             ADDI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -205,7 +205,7 @@ module id_decoder #(
             end
 
             AND: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b0011;
@@ -219,7 +219,7 @@ module id_decoder #(
             end
 
             ANDI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0011;
@@ -232,10 +232,22 @@ module id_decoder #(
                 reg_we_o = 1'b1;
             end
 
-            // AUIPC
+            AUIPC: begin
+                br_op_o = 2'b00;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
 
             BEQ: begin
-                br_op_o = 1'b1;
+                br_op_o = 2'b01;
                 alu_a_mux_sel_o = 2'b01;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -248,14 +260,50 @@ module id_decoder #(
                 reg_we_o = 1'b0;
             end
 
-            // BNE
+            BNE: begin
+                br_op_o = 2'b10;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
 
-            // JAL
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
 
-            // JALR
+                reg_we_o = 1'b0;
+            end
+
+            JAL: begin
+                br_op_o = 2'b11;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b10;
+
+                reg_we_o = 1'b1;
+            end
+
+            JALR: begin
+                br_op_o = 2'b11;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b10;
+
+                reg_we_o = 1'b1;
+            end
 
             LB: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -269,7 +317,7 @@ module id_decoder #(
             end
 
             LUI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b10;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -282,10 +330,22 @@ module id_decoder #(
                 reg_we_o = 1'b1;
             end
 
-            // LW
+            LW: begin
+                br_op_o = 2'b00;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b1;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b00;
+
+                reg_we_o = 1'b1;
+            end
 
             OR: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b0100;
@@ -299,7 +359,7 @@ module id_decoder #(
             end
 
             ORI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0100;
@@ -313,7 +373,7 @@ module id_decoder #(
             end
 
             SB: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -327,7 +387,7 @@ module id_decoder #(
             end
 
             SLLI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0111;
@@ -341,7 +401,7 @@ module id_decoder #(
             end
 
             SRLI: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b1000;
@@ -355,7 +415,7 @@ module id_decoder #(
             end
 
             SW: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
@@ -369,7 +429,7 @@ module id_decoder #(
             end
 
             XOR: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b0101;
@@ -383,7 +443,7 @@ module id_decoder #(
             end
 
             PCNT: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b1011;
@@ -397,7 +457,7 @@ module id_decoder #(
             end
 
             PACK: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b1100;
@@ -411,7 +471,7 @@ module id_decoder #(
             end
 
             MINU: begin
-                br_op_o = 1'b0;
+                br_op_o = 2'b00;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b1101;
