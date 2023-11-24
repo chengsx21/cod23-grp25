@@ -59,10 +59,12 @@ module id_decoder #(
     logic [6:0] opcode;
     logic [6:0] func7;
     logic [2:0] func3;
+    logic [4:0] rs2;
 
     assign opcode = inst_i[6:0];
     assign func7 = inst_i[31:25];
     assign func3 = inst_i[14:12];
+    assign rs2 = inst_i[24:20];
 
     always_comb begin
         op = DEFAULT;

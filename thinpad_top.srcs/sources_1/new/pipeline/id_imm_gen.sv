@@ -37,6 +37,7 @@ module id_imm_gen #(
     logic [6:0] opcode;
     logic [6:0] func7;
     logic [2:0] func3;
+    logic [4:0] rs2;
 
     assign opcode = inst_i[6:0];
     assign func7 = inst_i[31:25];
