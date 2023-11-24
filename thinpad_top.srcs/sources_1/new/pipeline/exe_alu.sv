@@ -29,6 +29,12 @@ module exe_alu #(
             4'b1001: y_i = $signed(a_i) >>> b_i[4:0];
             // 10 -> ROTL
             4'b1010: y_i = (a_i << b_i[4:0]) | (a_i >> (DATA_WIDTH - b_i[4:0]));
+            // 11 -> PCNT
+            4'b1011: y_i = $countones(a_i);
+            // 12 -> PACK
+            4'b1100: y_i = {b_i[DATA_WIDTH/2-1:0], a_i[DATA_WIDTH/2-1:0]};
+            // 13 -> MINU
+            4'b1101: y_i = a_i < b_i ? a_i : b_i;
             // 0 -> NOP
             default: y_i = {DATA_WIDTH{1'b0}};
         endcase

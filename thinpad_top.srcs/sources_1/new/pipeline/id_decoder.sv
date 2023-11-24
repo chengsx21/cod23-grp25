@@ -25,16 +25,30 @@ module id_decoder #(
     );
 
     // Follow the format of `lab3_tb.sv`
-    typedef enum logic [3:0] {
-        LUI = 4'b0001,
-        BEQ = 4'b0010,
-        LB = 4'b0011,
-        SB  = 4'b0100,
-        SW = 4'b0101,
-        ADDI = 4'b0110,
-        ANDI = 4'b0111,
-        ADD = 4'b1000,
-        DEFAULT = 4'b1010
+    typedef enum logic [5:0] {
+        DEFAULT = 6'b000000,
+        ADD = 6'b000001,
+        ADDI = 6'b000010,
+        AND = 6'b000011,
+        ANDI = 6'b000100,
+        AUIPC = 6'b000101,
+        BEQ = 6'b000110,
+        BNE = 6'b000111,
+        JAL = 6'b001000,
+        JALR = 6'b001001,
+        LB = 6'b001010,
+        LUI = 6'b001011,
+        LW = 6'b001100,
+        OR = 6'b001101,
+        ORI = 6'b001110,
+        SB = 6'b001111,
+        SLLI = 6'b010000,
+        SRLI = 6'b010001,
+        SW = 6'b010010,
+        XOR = 6'b010011,
+        PCNT = 6'b010100,
+        PACK = 6'b010101,
+        MINU = 6'b010110
     } Opcode_t;
     Opcode_t op;
 
@@ -61,11 +75,17 @@ module id_decoder #(
                 if (func3 == 3'b000) begin
                     op = BEQ;
                 end
+                else if (func3 == 3'b001) begin
+                    op = BNE;
+                end
             end
 
             7'b0000011: begin
                 if (func3 == 3'b000) begin
                     op = LB;
+                end
+                else if (func3 == 3'b010) begin
+                    op = LW;
                 end
             end
 
@@ -85,13 +105,55 @@ module id_decoder #(
                 else if (func3 == 3'b111) begin
                     op = ANDI;
                 end
+                else if (func3 == 3'b110) begin
+                    op = ORI;
+                end
+                else if (func3 == 3'b001 && func7 == 7'b0000000) begin
+                    op = SLLI;
+                end
+                else if (func3 == 3'b101 && func7 == 7'b0000000) begin
+                    op = SRLI;
+                end
+                else if (func3 == 3'b001 && func7 == 7'b0110000 && rs2 == 5'b00010) begin
+                    op = PCNT;
+                end
             end
 
             7'b0110011: begin
                 if (func3 == 3'b000 && func7 == 7'b0000000) begin
                     op = ADD;
                 end
+                else if (func3 == 3'b111 && func7 == 7'b0000000) begin
+                    op = AND;
+                end
+                else if (func3 == 3'b110 && func7 == 7'b0000000) begin
+                    op = OR;
+                end
+                else if (func3 == 3'b100 && func7 == 7'b0000000) begin
+                    op = XOR;
+                end
+                else if (func3 == 3'b100 && func7 == 7'b0000100) begin
+                    op = PACK;
+                end
+                else if (func3 == 3'b110 && func7 == 7'b0000101) begin
+                    op = MINU;
+                end
             end
+
+            7'b0010111: begin
+                op = AUIPC;
+            end
+
+            7'b1101111: begin
+                op = JAL;
+            end
+
+            7'b1100111: begin
+                if (func3 == 3'b000) begin
+                    op = JALR;
+                end
+            end
+
             default: begin
                 op = DEFAULT;
             end
@@ -112,10 +174,10 @@ module id_decoder #(
         reg_we_o = 1'b0;
 
         case (op)
-            LUI: begin
+            ADD: begin
                 br_op_o = 1'b0;
-                alu_a_mux_sel_o = 2'b10;
-                alu_b_mux_sel_o = 2'b01;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
                 alu_op_o = 4'b0001;
 
                 dm_en_o = 1'b0;
@@ -124,62 +186,6 @@ module id_decoder #(
                 writeback_mux_sel_o = 2'b01;
 
                 reg_we_o = 1'b1;
-            end
-
-            BEQ: begin
-                br_op_o = 1'b1;
-                alu_a_mux_sel_o = 2'b01;
-                alu_b_mux_sel_o = 2'b01;
-                alu_op_o = 4'b0001;
-
-                dm_en_o = 1'b0;
-                dm_we_o = 1'b0;
-                dm_dat_width_o = 3'b100;
-                writeback_mux_sel_o = 2'b01;
-
-                reg_we_o = 1'b0;
-            end
-
-            LB: begin
-                br_op_o = 1'b0;
-                alu_a_mux_sel_o = 2'b00;
-                alu_b_mux_sel_o = 2'b01;
-                alu_op_o = 4'b0001;
-
-                dm_en_o = 1'b1;
-                dm_we_o = 1'b0;
-                dm_dat_width_o = 3'b001;
-                writeback_mux_sel_o = 2'b00;
-
-                reg_we_o = 1'b1;
-            end
-
-            SB: begin
-                br_op_o = 1'b0;
-                alu_a_mux_sel_o = 2'b00;
-                alu_b_mux_sel_o = 2'b01;
-                alu_op_o = 4'b0001;
-
-                dm_en_o = 1'b1;
-                dm_we_o = 1'b1;
-                dm_dat_width_o = 3'b001;
-                writeback_mux_sel_o = 2'b01;
-
-                reg_we_o = 1'b0;
-            end
-
-            SW: begin
-                br_op_o = 1'b0;
-                alu_a_mux_sel_o = 2'b00;
-                alu_b_mux_sel_o = 2'b01;
-                alu_op_o = 4'b0001;
-
-                dm_en_o = 1'b1;
-                dm_we_o = 1'b1;
-                dm_dat_width_o = 3'b100;
-                writeback_mux_sel_o = 2'b01;
-
-                reg_we_o = 1'b0;
             end
 
             ADDI: begin
@@ -187,6 +193,20 @@ module id_decoder #(
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            AND: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b0011;
 
                 dm_en_o = 1'b0;
                 dm_we_o = 1'b0;
@@ -210,11 +230,189 @@ module id_decoder #(
                 reg_we_o = 1'b1;
             end
 
-            ADD: begin
+            // AUIPC
+
+            BEQ: begin
+                br_op_o = 1'b1;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+            end
+
+            // BNE
+
+            // JAL
+
+            // JALR
+
+            LB: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b1;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b001;
+                writeback_mux_sel_o = 2'b00;
+
+                reg_we_o = 1'b1;
+            end
+
+            LUI: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b10;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            // LW
+
+            OR: begin
                 br_op_o = 1'b0;
                 alu_a_mux_sel_o = 2'b00;
                 alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b0100;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            ORI: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0100;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            SB: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
                 alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b1;
+                dm_we_o = 1'b1;
+                dm_dat_width_o = 3'b001;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+            end
+
+            SLLI: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0111;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            SRLI: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b1000;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            SW: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b1;
+                dm_we_o = 1'b1;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+            end
+
+            XOR: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b0101;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            PCNT: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b1011;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            PACK: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b1100;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            MINU: begin
+                br_op_o = 1'b0;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b1101;
 
                 dm_en_o = 1'b0;
                 dm_we_o = 1'b0;
