@@ -46,7 +46,7 @@ module tb;
 	wire uart_tsre;  // ���ݷ�???��ϱ�???
 
 	// Windows ??Ҫע��·���ָ�����ת�壬���� "D:\\foo\\bar.bin"
-	parameter BASE_RAM_INIT_FILE = "C:\\Users\\cyh\\Desktop\\rv-2023\\cod23-grp25\\thinpad_top.srcs\\sources_1\\new\\binary.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
+	parameter BASE_RAM_INIT_FILE = "C:\\Users\\cyh\\Desktop\\rv-2023\\cod23-grp25\\thinpad_top.srcs\\sources_1\\new\\kernel-rv32-no16550.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter EXT_RAM_INIT_FILE = "/tmp/eram.bin";  // ExtRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter FLASH_INIT_FILE = "/tmp/kernel.elf";  // Flash ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 
