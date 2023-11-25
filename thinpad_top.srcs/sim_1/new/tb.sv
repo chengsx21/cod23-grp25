@@ -9,7 +9,7 @@ module tb;
 	reg [3:0] touch_btn; // BTN1~BTN4����ť���أ�����ʱΪ 1
 	reg [31:0] dip_sw;   // 32 λ���뿪�أ�������ON��ʱ?? 1
 
-	wire [15:0] leds;  // 16 λ LED�����ʱ 1 ����
+	wire [15:0] leds;  // 16 λ LED������? 1 ����
 	wire [7:0] dpy0;   // ����ܵ�λ�źţ�����С���㣬��� 1 ����
 	wire [7:0] dpy1;   // ����ܸ�λ�źţ�����С���㣬��� 1 ����
 
@@ -18,14 +18,14 @@ module tb;
 
 	wire [31:0] base_ram_data;  // BaseRAM ���ݣ��� 8 λ�� CPLD ���ڿ�������??
 	wire [19:0] base_ram_addr;  // BaseRAM ��ַ
-	wire[3:0] base_ram_be_n;    // BaseRAM �ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��?? 0
+	wire[3:0] base_ram_be_n;    // BaseRAM �ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��??? 0
 	wire base_ram_ce_n;  // BaseRAM Ƭ???������??
 	wire base_ram_oe_n;  // BaseRAM ��ʹ�ܣ�����??
 	wire base_ram_we_n;  // BaseRAM дʹ�ܣ�����??
 
 	wire [31:0] ext_ram_data;  // ExtRAM ����
 	wire [19:0] ext_ram_addr;  // ExtRAM ��ַ
-	wire[3:0] ext_ram_be_n;    // ExtRAM �ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��?? 0
+	wire[3:0] ext_ram_be_n;    // ExtRAM �ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��??? 0
 	wire ext_ram_ce_n;  // ExtRAM Ƭ???������??
 	wire ext_ram_oe_n;  // ExtRAM ��ʹ�ܣ�����??
 	wire ext_ram_we_n;  // ExtRAM дʹ�ܣ�����??
@@ -43,10 +43,10 @@ module tb;
 	wire uart_wrn;  // д�����źţ�����??
 	wire uart_dataready;  // ��������׼��??
 	wire uart_tbre;  // ��???���ݱ�??
-	wire uart_tsre;  // ���ݷ�???��ϱ�??
+	wire uart_tsre;  // ���ݷ�???��ϱ�???
 
 	// Windows ??Ҫע��·���ָ�����ת�壬���� "D:\\foo\\bar.bin"
-	parameter BASE_RAM_INIT_FILE = "C:\\rv\\asmcode\\lab6.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
+	parameter BASE_RAM_INIT_FILE = "C:\\Users\\cyh\\Desktop\\rv-2023\\cod23-grp25\\thinpad_top.srcs\\sources_1\\new\\binary.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter EXT_RAM_INIT_FILE = "/tmp/eram.bin";  // ExtRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter FLASH_INIT_FILE = "/tmp/kernel.elf";  // Flash ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 
@@ -58,6 +58,7 @@ module tb;
 		reset_btn = 1;
 		#100;
 		reset_btn = 0;
+		#100000;
 	end
 
 	// �������û���??

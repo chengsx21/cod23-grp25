@@ -79,7 +79,7 @@ module hazard_controller #(
 
             if_id_bubble_o = 1;
             id_exe_bubble_o = 1;
-            exe_mem_bubble_o = 1;
+            exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 0;
         end
 
