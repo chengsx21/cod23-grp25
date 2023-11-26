@@ -339,6 +339,8 @@ module thinpad_top #(
 		.rs1_dat_i(exe_rs1_dat),
 		.rs2_dat_i(exe_rs2_dat),
 		.br_op_i(exe_br_op),
+		.pc_i(exe_pc),
+		.pc_jump_i(exe_alu_y),
 		.br_cond_o(exe_br_cond)
     );
 
