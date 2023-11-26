@@ -713,7 +713,7 @@ module thinpad_top #(
     );
 
     uart_controller #(
-        .CLK_FREQ(10_000_000),
+        .CLK_FREQ(50_000_000),
         .BAUD    (115200)
     ) uart_controller (
         .clk_i(clk_10M),
