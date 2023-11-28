@@ -10,7 +10,7 @@ module exe_b_comp #(
 
     always_comb begin
         br_cond_o = 1'b0;
-        // 0 For No Branch, 1 For Beq Branch, 2 For Beq Branch, 3 For Unconditional Jump
+        // 0 For No Branch, 1 For Beq Branch, 2 For Bne Branch, 3 For Unconditional Jump
         if (br_op_i == 2'b01) begin
             br_cond_o = (rs1_dat_i == rs2_dat_i);
         end
