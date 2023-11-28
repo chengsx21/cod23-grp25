@@ -112,6 +112,9 @@ module thinpad_top #(
 	assign uart_rdn = 1'b1;
 	assign uart_wrn = 1'b1;
 
+	logic sys_clk;
+	logic sys_rst;
+
 	assign sys_clk = clk50M;
 	assign sys_rst = reset_of_clk50M;
 
