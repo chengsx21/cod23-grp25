@@ -255,6 +255,27 @@ module thinpad_top #(
 		.rdata_b_o(id_rs2_dat)
 	);
 
+	logic [DATA_WIDTH-1:0] forward_rs1_dat;
+	logic forward_rs1_dat_sel;
+	logic [DATA_WIDTH-1:0] rs1_dat;
+
+	id_rdata_a_mux id_rdata_a_mux (
+		.rdata_a_i(id_rs1_dat),
+		.forward_rdata_a_i(forward_rs1_dat),
+		.forward_rdata_a_sel_i(forward_rs1_dat_sel),
+		.rdata_a_o(rs1_dat)
+	);
+
+	logic [DATA_WIDTH-1:0] forward_rs2_dat;
+	logic forward_rs2_dat_sel;
+	logic [DATA_WIDTH-1:0] rs2_dat;
+
+	id_rdata_b_mux id_rdata_b_mux (
+		.rdata_b_i(id_rs2_dat),
+		.forward_rdata_b_i(forward_rs2_dat),
+		.forward_rdata_b_sel_i(forward_rs2_dat_sel),
+		.rdata_b_o(rs2_dat)
+	);
 
 	//* =============== ID-EXE =============== *//
 
@@ -299,7 +320,7 @@ module thinpad_top #(
 		.rs2_i(id_rs2),
 		.rs2_o(exe_rs2),
 
-		.rs1_dat_i(id_rs1_dat),
+		.rs1_dat_i(rs1_dat),
 		.rs1_dat_o(exe_rs1_dat),
 		.br_op_i(id_br_op),
 		.br_op_o(exe_br_op),
@@ -313,7 +334,7 @@ module thinpad_top #(
 		// [EXE] ~ [MEM]
 		.pc_i(id_pc),
 		.pc_o(exe_pc),
-		.rs2_dat_i(id_rs2_dat),
+		.rs2_dat_i(rs2_dat),
 		.rs2_dat_o(exe_rs2_dat),
 		.dm_en_i(id_dm_en),
 		.dm_en_o(exe_dm_en),
@@ -477,7 +498,7 @@ module thinpad_top #(
 		.reg_we_o(writeback_reg_we)
 	);
 
-	//* ================ HAZARD ================ *//
+	//* ============== CONTROLLER ============== *//
 
 	hazard_controller hazard_controller (
 		.im_ready_i(im_ready),
@@ -494,6 +515,9 @@ module thinpad_top #(
 		.mem_reg_we_i(mem_reg_we),
 		.writeback_reg_we_i(writeback_reg_we),
 
+		.exe_dm_en_i(exe_dm_en),
+		.exe_dm_we_i(exe_dm_we),
+
 		.if_pc_i(if_pc),
 		.id_pc_i(id_pc),
 		.exe_pc_i(exe_pc),
@@ -509,6 +533,29 @@ module thinpad_top #(
 		.exe_mem_bubble_o(exe_mem_bubble),
 		.mem_wb_stall_o(mem_writeback_stall),
 		.mem_wb_bubble_o(mem_writeback_bubble)
+	);
+
+	forwarding_controller forwarding_controller (
+		.id_rs1_i(id_rs1),
+		.id_rs2_i(id_rs2),
+		.exe_rd_i(exe_rd),
+		.mem_rd_i(mem_rd),
+		.writeback_rd_i(writeback_rd),
+
+		.exe_reg_we_i(exe_reg_we),
+		.mem_reg_we_i(mem_reg_we),
+		.writeback_reg_we_i(writeback_reg_we),
+
+		.exe_data_i(exe_alu_y),
+		.mem_data_i(mem_reg_dat),
+		.writeback_data_i(writeback_reg_dat),
+
+		.exe_writeback_mux_sel_i(exe_writeback_mux_sel),
+
+		.rs1_dat_o(forward_rs1_dat),
+		.rs2_dat_o(forward_rs2_dat),
+		.rs1_dat_sel_o(forward_rs1_dat_sel),
+		.rs2_dat_sel_o(forward_rs2_dat_sel)
 	);
 
 	//* ================ ARBITER ================ *//

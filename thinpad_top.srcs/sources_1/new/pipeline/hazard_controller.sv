@@ -16,6 +16,9 @@ module hazard_controller #(
     input wire mem_reg_we_i,
     input wire writeback_reg_we_i,
 
+    input wire exe_dm_en_i,
+    input wire exe_dm_we_i,
+
     input wire [ADDR_WIDTH-1:0] if_pc_i,
     input wire [ADDR_WIDTH-1:0] id_pc_i,
     input wire [ADDR_WIDTH-1:0] exe_pc_i,
@@ -38,9 +41,9 @@ module hazard_controller #(
     wire writeback_raw_stall;
 
     assign pc_sel_o = br_cond_i;
-    assign exe_raw_stall = exe_reg_we_i && exe_rd_i && (exe_rd_i == id_rs1_i || exe_rd_i == id_rs2_i);
-    assign mem_raw_stall = mem_reg_we_i && mem_rd_i && (mem_rd_i == id_rs1_i || mem_rd_i == id_rs2_i);
-    assign writeback_raw_stall = writeback_reg_we_i && writeback_rd_i && (writeback_rd_i == id_rs1_i || writeback_rd_i == id_rs2_i);
+    // assign exe_raw_stall = exe_reg_we_i && exe_rd_i && (exe_rd_i == id_rs1_i || exe_rd_i == id_rs2_i);
+    // assign mem_raw_stall = mem_reg_we_i && mem_rd_i && (mem_rd_i == id_rs1_i || mem_rd_i == id_rs2_i);
+    // assign writeback_raw_stall = writeback_reg_we_i && writeback_rd_i && (writeback_rd_i == id_rs1_i || writeback_rd_i == id_rs2_i);
 
     always_comb begin
         pc_stall_o = 0;
@@ -85,7 +88,7 @@ module hazard_controller #(
 
         //* Read after Write Hazard *//
         //* Wait for WriteBack to be Done *//
-        else if (exe_raw_stall || mem_raw_stall || writeback_raw_stall) begin
+        else if (exe_dm_en_i && (~exe_dm_we_i)) begin
             pc_stall_o = 1;
             if_id_stall_o = 1;
             id_exe_stall_o = 0;
