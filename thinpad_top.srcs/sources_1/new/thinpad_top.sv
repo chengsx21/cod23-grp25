@@ -339,6 +339,8 @@ module thinpad_top #(
 		.rs1_dat_i(exe_rs1_dat),
 		.rs2_dat_i(exe_rs2_dat),
 		.br_op_i(exe_br_op),
+		.pc_i(exe_pc),
+		.pc_jump_i(exe_alu_y),
 		.br_cond_o(exe_br_cond)
     );
 
@@ -711,7 +713,7 @@ module thinpad_top #(
     );
 
     uart_controller #(
-        .CLK_FREQ(10_000_000),
+        .CLK_FREQ(50_000_000),
         .BAUD    (115200)
     ) uart_controller (
         .clk_i(clk_10M),
