@@ -39,6 +39,15 @@ module hazard_controller #(
     wire exe_raw_stall;
     wire mem_raw_stall;
     wire writeback_raw_stall;
+    
+    typedef enum logic [2:0] {
+        NONE = 3'b000,
+        DM = 3'b001,
+        BR = 3'b010,
+        RW = 3'b011,
+        IM = 3'b100
+    } hazard_t;
+    hazard_t hazard_type;
 
     assign pc_sel_o = br_cond_i;
     // assign exe_raw_stall = exe_reg_we_i && exe_rd_i && (exe_rd_i == id_rs1_i || exe_rd_i == id_rs2_i);
@@ -57,6 +66,8 @@ module hazard_controller #(
         exe_mem_bubble_o = 0;
         mem_wb_bubble_o = 0;
 
+        hazard_type = NONE;
+
         //* DM not Ready *//
         //* Wait for DM to be Ready *//
         if (~dm_ready_i) begin
@@ -70,6 +81,8 @@ module hazard_controller #(
             id_exe_bubble_o = 0;
             exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 1;
+
+            hazard_type = DM;
         end
 
         //* PC Branch *//
@@ -84,6 +97,8 @@ module hazard_controller #(
             id_exe_bubble_o = 1;
             exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 0;
+
+            hazard_type = BR;
         end
 
         //* Read after Write Hazard *//
@@ -99,6 +114,8 @@ module hazard_controller #(
             id_exe_bubble_o = 1;
             exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 0;
+
+            hazard_type = RW;
         end
 
         //* IM not Ready *//
@@ -114,6 +131,8 @@ module hazard_controller #(
             id_exe_bubble_o = 0;
             exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 0;
+
+            hazard_type = IM;
         end
     end
 
