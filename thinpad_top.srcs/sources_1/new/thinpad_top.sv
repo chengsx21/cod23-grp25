@@ -86,27 +86,34 @@ module thinpad_top #(
 	/* =========== Demo code begin =========== */
 
 	// PLL frequency divider
-	logic locked, clk_10M, clk_20M;
+	logic locked, clk10M, clk20M, clk30M, clk40M, clk50M, clk60M;
 	pll_example clock_gen (
 		// Clock in ports
 		.clk_in1(clk_50M),  // Outside clock input
 		// Clock out ports
-		.clk_out1(clk_10M),  // Frequency set in IP config page
-		.clk_out2(clk_20M),  // Frequency set in IP config page
+		.clk_out1(clk10M),  // Frequency set in IP config page
+		.clk_out2(clk20M),  // Frequency set in IP config page
+		.clk_out3(clk30M),  // Frequency set in IP config page
+		.clk_out4(clk40M),  // Frequency set in IP config page
+		.clk_out5(clk50M),  // Frequency set in IP config page
+		.clk_out6(clk60M),  // Frequency set in IP config page
 		// Status and control signals
 		.reset(reset_btn),  // PLL reset
 		.locked(locked)  // PLL lock signal, 1 when stable
 	);
 
-	logic reset_of_clk10M;
-	// Async reset, sync free, transform locked to reset_of_clk10M
-	always_ff @(posedge clk_10M or negedge locked) begin
-		if (~locked) reset_of_clk10M <= 1'b1;
-		else reset_of_clk10M <= 1'b0;
+	logic reset_of_clk50M;
+	// Async reset, sync free, transform locked to reset_of_clk50M
+	always_ff @(posedge clk50M or negedge locked) begin
+		if (~locked) reset_of_clk50M <= 1'b1;
+		else reset_of_clk50M <= 1'b0;
 	end
 
 	assign uart_rdn = 1'b1;
 	assign uart_wrn = 1'b1;
+
+	assign sys_clk = clk50M;
+	assign sys_rst = reset_of_clk50M;
 
 	//* =========== Demo code end =========== *//
 
@@ -117,8 +124,8 @@ module thinpad_top #(
 	logic [ADDR_WIDTH-1:0] if_pc_next;
 
 	if_pc_reg if_pc_reg (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.pc_stall_i(pc_stall),
 		.pc_next_i(if_pc_next),
 		.pc_current_o(if_pc)
@@ -147,8 +154,8 @@ module thinpad_top #(
 	logic wb0_we_o;
 
 	if_im_master if_im_master (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.pc_i(if_pc),
 		.pc_sel_i(pc_sel),
 		.inst_o(if_inst),
@@ -173,8 +180,8 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_inst;
 
 	if_id_regs if_id_regs (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.stall_i(if_id_stall),
 		.bubble_i(if_id_bubble),
 
@@ -243,8 +250,8 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_rs2_dat;
 
 	id_reg_file id_reg_file (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 
 		.we_i(writeback_reg_we),
 		.waddr_i(writeback_rd),
@@ -284,8 +291,8 @@ module thinpad_top #(
 	logic exe_reg_we;
 
 	id_exe_regs id_exe_regs (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.stall_i(id_exe_stall),
 		.bubble_i(id_exe_bubble),
 
@@ -386,8 +393,8 @@ module thinpad_top #(
 	logic mem_reg_we;
 
 	exe_mem_regs exe_mem_regs (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.stall_i(exe_mem_stall),
 		.bubble_i(exe_mem_bubble),
 
@@ -429,8 +436,8 @@ module thinpad_top #(
 	logic wb1_we_o;
 
 	mem_dm_master mem_dm_master (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.dm_en_i(mem_dm_en),
 		.dm_we_i(mem_dm_we),
 		.dm_dat_width_i(mem_dm_dat_width),
@@ -465,8 +472,8 @@ module thinpad_top #(
 	logic mem_writeback_bubble;
 
 	mem_writeback_regs mem_writeback_regs (
-		.clk_i(clk_10M),
-		.rst_i(reset_of_clk10M),
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
 		.stall_i(mem_writeback_stall),
 		.bubble_i(mem_writeback_bubble),
 
@@ -528,8 +535,8 @@ module thinpad_top #(
     logic wbs_cyc_o;
 
     wb_arbiter_2 wb_arbiter_2 (
-        .clk(clk_10M),
-        .rst(reset_of_clk10M),
+        .clk(sys_clk),
+        .rst(sys_rst),
 
         .wbm0_adr_i(wb0_adr_o),
         .wbm0_dat_i(wb0_dat_o),
@@ -595,8 +602,8 @@ module thinpad_top #(
     logic wbs2_we_o;
 
     wb_mux_3 wb_mux_3 (
-        .clk(clk_10M),
-        .rst(reset_of_clk10M),
+        .clk(sys_clk),
+        .rst(sys_rst),
 
         .wbm_adr_i(wbs_adr_o),
         .wbm_dat_i(wbs_dat_i),
@@ -664,8 +671,8 @@ module thinpad_top #(
         .SRAM_ADDR_WIDTH(20),
         .SRAM_DATA_WIDTH(32)
     ) sram_controller_base (
-        .clk_i(clk_10M),
-        .rst_i(reset_of_clk10M),
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
 
         // Wishbone slave (to MUX)
         .wb_cyc_i(wbs0_cyc_o),
@@ -690,8 +697,8 @@ module thinpad_top #(
         .SRAM_ADDR_WIDTH(20),
         .SRAM_DATA_WIDTH(32)
     ) sram_controller_ext (
-        .clk_i(clk_10M),
-        .rst_i(reset_of_clk10M),
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
 
         // Wishbone slave (to MUX)
         .wb_cyc_i(wbs1_cyc_o),
@@ -716,8 +723,8 @@ module thinpad_top #(
         .CLK_FREQ(50_000_000),
         .BAUD    (115200)
     ) uart_controller (
-        .clk_i(clk_10M),
-        .rst_i(reset_of_clk10M),
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
 
         .wb_cyc_i(wbs2_cyc_o),
         .wb_stb_i(wbs2_stb_o),
