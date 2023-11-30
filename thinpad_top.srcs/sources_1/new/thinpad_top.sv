@@ -86,17 +86,12 @@ module thinpad_top #(
 	/* =========== Demo code begin =========== */
 
 	// PLL frequency divider
-	logic locked, clk10M, clk20M, clk30M, clk40M, clk50M, clk60M;
+	logic locked, clk50M;
 	pll_example clock_gen (
 		// Clock in ports
 		.clk_in1(clk_50M),  // Outside clock input
 		// Clock out ports
-		.clk_out1(clk10M),  // Frequency set in IP config page
-		.clk_out2(clk20M),  // Frequency set in IP config page
-		.clk_out3(clk30M),  // Frequency set in IP config page
-		.clk_out4(clk40M),  // Frequency set in IP config page
-		.clk_out5(clk50M),  // Frequency set in IP config page
-		.clk_out6(clk60M),  // Frequency set in IP config page
+		.clk_out1(clk50M),  // Frequency set in IP config page
 		// Status and control signals
 		.reset(reset_btn),  // PLL reset
 		.locked(locked)  // PLL lock signal, 1 when stable
@@ -136,10 +131,12 @@ module thinpad_top #(
 
 	logic [DATA_WIDTH-1:0] exe_alu_y;
 	logic pc_sel;
+	logic [ADDR_WIDTH-1:0] if_jp_pc;
+	logic [ADDR_WIDTH-1:0] exe_jp_pc;
 
 	if_pc_mux if_pc_mux (
-		.alu_y_i(exe_alu_y),
-		.pc_current_i(if_pc),
+		.pc_if(if_jp_pc),
+		.pc_exe(exe_jp_pc),
 		.pc_sel_i(pc_sel),
 		.pc_next_o(if_pc_next)
     );
@@ -179,6 +176,9 @@ module thinpad_top #(
 	logic if_id_stall;
 	logic if_id_bubble;
 
+	logic if_predict;
+	logic id_predict;
+
 	logic [ADDR_WIDTH-1:0] id_pc;
 	logic [DATA_WIDTH-1:0] id_inst;
 
@@ -191,6 +191,8 @@ module thinpad_top #(
 		// [ID] ~ [EXE]
 		.inst_i(if_inst),
 		.inst_o(id_inst),
+		.predict_i(if_predict),
+		.predict_o(id_predict),
 
 		// [EXE] ~ [MEM]
 		.pc_i(if_pc),
@@ -202,7 +204,7 @@ module thinpad_top #(
 	logic [4:0] id_rs1;
 	logic [4:0] id_rs2;
 
-	logic [1:0] id_br_op;
+	logic [2:0] id_br_op;
 	logic [1:0] id_alu_a_mux_sel;
 	logic [1:0] id_alu_b_mux_sel;
 	logic [3:0] id_alu_op;
@@ -301,10 +303,11 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] exe_rs1_dat;
 	logic [DATA_WIDTH-1:0] exe_rs2_dat;
 
-	logic [1:0] exe_br_op;
+	logic [2:0] exe_br_op;
 	logic [1:0] exe_alu_a_mux_sel;
 	logic [1:0] exe_alu_b_mux_sel;
 	logic [3:0] exe_alu_op;
+	logic exe_predict;
 
 	logic exe_dm_en;
 	logic exe_dm_we;
@@ -340,6 +343,8 @@ module thinpad_top #(
 		.alu_b_mux_sel_o(exe_alu_b_mux_sel),
 		.alu_op_i(id_alu_op),
 		.alu_op_o(exe_alu_op),
+		.predict_i(id_predict),
+		.predict_o(exe_predict),
 
 		// [EXE] ~ [MEM]
 		.pc_i(id_pc),
@@ -364,15 +369,15 @@ module thinpad_top #(
 
 	//* ================= EXE ================= *//
 
-	logic exe_br_cond;
+	logic exe_br_taken;
+	logic exe_br_en;
 
 	exe_b_comp exe_b_comp (
 		.rs1_dat_i(exe_rs1_dat),
 		.rs2_dat_i(exe_rs2_dat),
 		.br_op_i(exe_br_op),
-		.pc_i(exe_pc),
-		.pc_jump_i(exe_alu_y),
-		.br_cond_o(exe_br_cond)
+		.br_taken_o(exe_br_taken),
+		.br_en_o(exe_br_en)
     );
 
 	logic [DATA_WIDTH-1:0] exe_alu_a;
@@ -512,6 +517,8 @@ module thinpad_top #(
 
 	//* ============== CONTROLLER ============== *//
 
+	logic exe_br_miss;
+
 	hazard_controller hazard_controller (
 		.im_ready_i(im_ready),
 		.dm_ready_i(dm_ready),
@@ -522,7 +529,7 @@ module thinpad_top #(
 		.mem_rd_i(mem_rd),
 		.writeback_rd_i(writeback_rd),
 
-		.br_cond_i(exe_br_cond),
+		.br_miss_i(exe_br_miss),
 		.exe_reg_we_i(exe_reg_we),
 		.mem_reg_we_i(mem_reg_we),
 		.writeback_reg_we_i(writeback_reg_we),
@@ -568,6 +575,29 @@ module thinpad_top #(
 		.rs2_dat_o(forward_rs2_dat),
 		.rs1_dat_sel_o(forward_rs1_dat_sel),
 		.rs2_dat_sel_o(forward_rs2_dat_sel)
+	);
+
+	jump_predict #(
+		.DATA_WIDTH(32),
+		.ADDR_WIDTH(32)
+	) jump_predict (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.if_pc_i(if_pc),
+		.if_inst_i(if_inst),
+		.if_next_pc_o(if_jp_pc),
+		.if_predict_o(if_predict),
+
+		.exe_pc_i(exe_pc),
+		.br_predict_i(exe_predict),
+		.br_target_i(exe_alu_y),
+		.br_taken_i(exe_br_taken),
+		.br_en_i(exe_br_en),
+		.br_op_i(exe_br_op),
+
+		.br_miss_o(exe_br_miss),
+		.br_next_o(exe_jp_pc)
 	);
 
 	//* ================ ARBITER ================ *//
