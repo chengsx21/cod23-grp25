@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="99713333fs"></ZoomStartTime>
-      <ZoomEndTime time="101257334fs"></ZoomEndTime>
-      <Cursor1Time time="101000000fs"></Cursor1Time>
+      <ZoomStartTime time="1135500fs"></ZoomStartTime>
+      <ZoomEndTime time="1949001fs"></ZoomEndTime>
+      <Cursor1Time time="1401000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="175"></NameColumnWidth>
-      <ValueColumnWidth column_width="84"></ValueColumnWidth>
+      <NameColumnWidth column_width="163"></NameColumnWidth>
+      <ValueColumnWidth column_width="86"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="35" />
+   <WVObjectSize size="42" />
    <wvobject fp_name="/tb/dut/if_pc_reg/clk_i" type="logic">
       <obj_property name="ElementShortName">clk_i</obj_property>
       <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -120,44 +120,72 @@
       <obj_property name="ElementShortName">wb_ack_i</obj_property>
       <obj_property name="ObjectShortName">wb_ack_i</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/pc_sel_o" type="logic">
-      <obj_property name="ElementShortName">pc_sel_o</obj_property>
-      <obj_property name="ObjectShortName">pc_sel_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/if_pc_i" type="array">
+      <obj_property name="ElementShortName">if_pc_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">if_pc_i[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/pc_stall_o" type="logic">
-      <obj_property name="ElementShortName">pc_stall_o</obj_property>
-      <obj_property name="ObjectShortName">pc_stall_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/if_inst_i" type="array">
+      <obj_property name="ElementShortName">if_inst_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">if_inst_i[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/if_id_stall_o" type="logic">
-      <obj_property name="ElementShortName">if_id_stall_o</obj_property>
-      <obj_property name="ObjectShortName">if_id_stall_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/if_next_pc_o" type="logic">
+      <obj_property name="ElementShortName">if_next_pc_o</obj_property>
+      <obj_property name="ObjectShortName">if_next_pc_o</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/id_exe_stall_o" type="logic">
-      <obj_property name="ElementShortName">id_exe_stall_o</obj_property>
-      <obj_property name="ObjectShortName">id_exe_stall_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/if_predict_o" type="logic">
+      <obj_property name="ElementShortName">if_predict_o</obj_property>
+      <obj_property name="ObjectShortName">if_predict_o</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/exe_mem_stall_o" type="logic">
-      <obj_property name="ElementShortName">exe_mem_stall_o</obj_property>
-      <obj_property name="ObjectShortName">exe_mem_stall_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/exe_pc_i" type="array">
+      <obj_property name="ElementShortName">exe_pc_i[32:0]</obj_property>
+      <obj_property name="ObjectShortName">exe_pc_i[32:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/mem_wb_stall_o" type="logic">
-      <obj_property name="ElementShortName">mem_wb_stall_o</obj_property>
-      <obj_property name="ObjectShortName">mem_wb_stall_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/br_predict_i" type="logic">
+      <obj_property name="ElementShortName">br_predict_i</obj_property>
+      <obj_property name="ObjectShortName">br_predict_i</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/if_id_bubble_o" type="logic">
-      <obj_property name="ElementShortName">if_id_bubble_o</obj_property>
-      <obj_property name="ObjectShortName">if_id_bubble_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/br_target_i" type="array">
+      <obj_property name="ElementShortName">br_target_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">br_target_i[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/id_exe_bubble_o" type="logic">
-      <obj_property name="ElementShortName">id_exe_bubble_o</obj_property>
-      <obj_property name="ObjectShortName">id_exe_bubble_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/br_taken_i" type="logic">
+      <obj_property name="ElementShortName">br_taken_i</obj_property>
+      <obj_property name="ObjectShortName">br_taken_i</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/exe_mem_bubble_o" type="logic">
-      <obj_property name="ElementShortName">exe_mem_bubble_o</obj_property>
-      <obj_property name="ObjectShortName">exe_mem_bubble_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/br_en_i" type="logic">
+      <obj_property name="ElementShortName">br_en_i</obj_property>
+      <obj_property name="ObjectShortName">br_en_i</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/hazard_controller/mem_wb_bubble_o" type="logic">
-      <obj_property name="ElementShortName">mem_wb_bubble_o</obj_property>
-      <obj_property name="ObjectShortName">mem_wb_bubble_o</obj_property>
+   <wvobject fp_name="/tb/dut/jump_predict/br_op_i" type="logic">
+      <obj_property name="ElementShortName">br_op_i</obj_property>
+      <obj_property name="ObjectShortName">br_op_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/br_miss_o" type="logic">
+      <obj_property name="ElementShortName">br_miss_o</obj_property>
+      <obj_property name="ObjectShortName">br_miss_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/br_next_o" type="array">
+      <obj_property name="ElementShortName">br_next_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">br_next_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/op" type="array">
+      <obj_property name="ElementShortName">op[5:0]</obj_property>
+      <obj_property name="ObjectShortName">op[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/br_addr_table" type="array">
+      <obj_property name="ElementShortName">br_addr_table[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">br_addr_table[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/next_pc_table" type="array">
+      <obj_property name="ElementShortName">next_pc_table[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">next_pc_table[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/history_table" type="array">
+      <obj_property name="ElementShortName">history_table[15:0]</obj_property>
+      <obj_property name="ObjectShortName">history_table[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/jump_predict/valid_table" type="array">
+      <obj_property name="ElementShortName">valid_table[15:0]</obj_property>
+      <obj_property name="ObjectShortName">valid_table[15:0]</obj_property>
    </wvobject>
 </wave_config>

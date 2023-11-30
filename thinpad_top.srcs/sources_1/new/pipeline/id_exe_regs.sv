@@ -19,14 +19,16 @@ module id_exe_regs #(
 
     input wire [DATA_WIDTH-1:0] rs1_dat_i,
     output logic [DATA_WIDTH-1:0] rs1_dat_o,
-    input wire [1:0] br_op_i,
-    output logic [1:0] br_op_o,
+    input wire [2:0] br_op_i,
+    output logic [2:0] br_op_o,
     input wire [1:0] alu_a_mux_sel_i,
     output logic [1:0] alu_a_mux_sel_o,
     input wire [1:0] alu_b_mux_sel_i,
     output logic [1:0] alu_b_mux_sel_o,
     input wire [3:0] alu_op_i,
     output logic [3:0] alu_op_o,
+    input wire predict_i,
+    output logic predict_o,
 
 
     // [EXE] ~ [MEM]
@@ -63,6 +65,7 @@ module id_exe_regs #(
             alu_b_mux_sel_o <= 2;
             // 0 For Nothing
             alu_op_o <= 0;
+            predict_o <= 0;
 
             pc_o <= 0;
             rs2_dat_o <= 0;
@@ -87,6 +90,7 @@ module id_exe_regs #(
             alu_b_mux_sel_o <= 2;
             // 0 For Nothing
             alu_op_o <= 0;
+            predict_o <= 0;
 
             pc_o <= 0;
             rs2_dat_o <= 0;
@@ -107,6 +111,7 @@ module id_exe_regs #(
             alu_a_mux_sel_o <= alu_a_mux_sel_i;
             alu_b_mux_sel_o <= alu_b_mux_sel_i;
             alu_op_o <= alu_op_i;
+            predict_o <= predict_i;
 
             pc_o <= pc_i;
             rs2_dat_o <= rs2_dat_i;

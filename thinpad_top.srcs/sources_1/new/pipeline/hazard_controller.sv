@@ -11,7 +11,7 @@ module hazard_controller #(
     input wire [4:0] mem_rd_i,
     input wire [4:0] writeback_rd_i,
 
-    input wire br_cond_i,
+    input wire br_miss_i,
     input wire exe_reg_we_i,
     input wire mem_reg_we_i,
     input wire writeback_reg_we_i,
@@ -49,7 +49,7 @@ module hazard_controller #(
     } hazard_t;
     hazard_t hazard_type;
 
-    assign pc_sel_o = br_cond_i;
+    assign pc_sel_o = br_miss_i;
     // assign exe_raw_stall = exe_reg_we_i && exe_rd_i && (exe_rd_i == id_rs1_i || exe_rd_i == id_rs2_i);
     // assign mem_raw_stall = mem_reg_we_i && mem_rd_i && (mem_rd_i == id_rs1_i || mem_rd_i == id_rs2_i);
     // assign writeback_raw_stall = writeback_reg_we_i && writeback_rd_i && (writeback_rd_i == id_rs1_i || writeback_rd_i == id_rs2_i);
