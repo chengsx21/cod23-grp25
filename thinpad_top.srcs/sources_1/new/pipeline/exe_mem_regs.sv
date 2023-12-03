@@ -36,6 +36,14 @@ module exe_mem_regs #(
     output logic [11:0] csr_waddr_o,
     input wire [DATA_WIDTH-1:0] csr_wdata_i,
     output logic [DATA_WIDTH-1:0] csr_wdata_o,
+    input wire exception_en_i,
+    output logic exception_en_o,
+    input wire [ADDR_WIDTH-1:0] exception_pc_i,
+    output logic [ADDR_WIDTH-1:0] exception_pc_o,
+    input wire [1:0] privilege_mode_i,
+    output logic [1:0] privilege_mode_o,
+    input wire [1:0] exception_privilege_mode_i,
+    output logic [1:0] exception_privilege_mode_o,
     input wire [1:0] instruction_mode_i,
     output logic [1:0] instruction_mode_o
     );
@@ -56,6 +64,10 @@ module exe_mem_regs #(
             csr_we_o <= 0;
             csr_waddr_o <= 0;
             csr_wdata_o <= 0;
+            exception_en_o <= 0;
+            exception_pc_o <= 0;
+            privilege_mode_o <= 0;
+            exception_privilege_mode_o <= 0;
             instruction_mode_o <= 0;
         end else if (stall_i) begin
             // Do nothing
@@ -74,6 +86,10 @@ module exe_mem_regs #(
             csr_we_o <= 0;
             csr_waddr_o <= 0;
             csr_wdata_o <= 0;
+            exception_en_o <= 0;
+            exception_pc_o <= 0;
+            privilege_mode_o <= privilege_mode_i;
+            exception_privilege_mode_o <= 0;
             instruction_mode_o <= 0;
         end else begin
             pc_o <= pc_i;
@@ -90,6 +106,10 @@ module exe_mem_regs #(
             csr_we_o <= csr_we_i;
             csr_waddr_o <= csr_waddr_i;
             csr_wdata_o <= csr_wdata_i;
+            exception_en_o <= exception_en_i;
+            exception_pc_o <= exception_pc_i;
+            privilege_mode_o <= privilege_mode_i;
+            exception_privilege_mode_o <= exception_privilege_mode_i;
             instruction_mode_o <= instruction_mode_i;
         end
     end

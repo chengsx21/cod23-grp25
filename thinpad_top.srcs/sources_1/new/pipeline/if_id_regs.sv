@@ -15,7 +15,11 @@ module if_id_regs #(
 
     // [EXE] ~ [MEM]
     input wire [DATA_WIDTH-1:0] pc_i,
-    output logic [DATA_WIDTH-1:0] pc_o
+    output logic [DATA_WIDTH-1:0] pc_o,
+
+    // [CSR]
+    input wire [1:0] privilege_mode_i,
+    output logic [1:0] privilege_mode_o
     );
 
     always_ff @(posedge clk_i) begin
@@ -23,16 +27,19 @@ module if_id_regs #(
             inst_o <= 0;
             pc_o <= 0;
             predict_o <= 0;
+            privilege_mode_o <= 2'b11;
         end else if (stall_i) begin
             // Do nothing   
         end else if (bubble_i) begin
             inst_o <= 0;
             pc_o <= 0;
             predict_o <= 1;
+            privilege_mode_o <= privilege_mode_i;
         end else begin
             inst_o <= inst_i;
             pc_o <= pc_i;
             predict_o <= predict_i;
+            privilege_mode_o <= privilege_mode_i;
         end
     end
 endmodule

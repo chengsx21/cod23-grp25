@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="2142138fs"></ZoomStartTime>
-      <ZoomEndTime time="2549315fs"></ZoomEndTime>
-      <Cursor1Time time="2294665fs"></Cursor1Time>
+      <ZoomStartTime time="1943833fs"></ZoomStartTime>
+      <ZoomEndTime time="2230834fs"></ZoomEndTime>
+      <Cursor1Time time="2070000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="135"></NameColumnWidth>
-      <ValueColumnWidth column_width="90"></ValueColumnWidth>
+      <NameColumnWidth column_width="228"></NameColumnWidth>
+      <ValueColumnWidth column_width="113"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="25" />
+   <WVObjectSize size="30" />
    <wvobject fp_name="/tb/clk_50M" type="logic">
       <obj_property name="ElementShortName">clk_50M</obj_property>
       <obj_property name="ObjectShortName">clk_50M</obj_property>
@@ -31,14 +31,6 @@
    <wvobject fp_name="/tb/dut/id_csr_file/mtvec" type="array">
       <obj_property name="ElementShortName">mtvec[31:0]</obj_property>
       <obj_property name="ObjectShortName">mtvec[31:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/id_csr_file/mie" type="array">
-      <obj_property name="ElementShortName">mie[31:0]</obj_property>
-      <obj_property name="ObjectShortName">mie[31:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/id_csr_file/mip" type="array">
-      <obj_property name="ElementShortName">mip[31:0]</obj_property>
-      <obj_property name="ObjectShortName">mip[31:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/tb/dut/if_pc" type="array">
       <obj_property name="ElementShortName">if_pc[31:0]</obj_property>
@@ -60,22 +52,6 @@
       <obj_property name="ElementShortName">pc_stall</obj_property>
       <obj_property name="ObjectShortName">pc_stall</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/if_id_stall" type="logic">
-      <obj_property name="ElementShortName">if_id_stall</obj_property>
-      <obj_property name="ObjectShortName">if_id_stall</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/id_exe_stall" type="logic">
-      <obj_property name="ElementShortName">id_exe_stall</obj_property>
-      <obj_property name="ObjectShortName">id_exe_stall</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/exe_mem_stall" type="logic">
-      <obj_property name="ElementShortName">exe_mem_stall</obj_property>
-      <obj_property name="ObjectShortName">exe_mem_stall</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/mem_writeback_stall" type="logic">
-      <obj_property name="ElementShortName">mem_writeback_stall</obj_property>
-      <obj_property name="ObjectShortName">mem_writeback_stall</obj_property>
-   </wvobject>
    <wvobject fp_name="/tb/dut/if_id_bubble" type="logic">
       <obj_property name="ElementShortName">if_id_bubble</obj_property>
       <obj_property name="ObjectShortName">if_id_bubble</obj_property>
@@ -84,40 +60,84 @@
       <obj_property name="ElementShortName">id_exe_bubble</obj_property>
       <obj_property name="ObjectShortName">id_exe_bubble</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/exe_mem_bubble" type="logic">
-      <obj_property name="ElementShortName">exe_mem_bubble</obj_property>
-      <obj_property name="ObjectShortName">exe_mem_bubble</obj_property>
+   <wvobject fp_name="/tb/dut/if_privilege_mode" type="array">
+      <obj_property name="ElementShortName">if_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">if_privilege_mode[1:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/mem_writeback_bubble" type="logic">
-      <obj_property name="ElementShortName">mem_writeback_bubble</obj_property>
-      <obj_property name="ObjectShortName">mem_writeback_bubble</obj_property>
+   <wvobject fp_name="/tb/dut/id_privilege_mode" type="array">
+      <obj_property name="ElementShortName">id_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">id_privilege_mode[1:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[16]" type="array">
-      <obj_property name="ElementShortName">[16][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[16][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/id_decoder/op" type="array">
+      <obj_property name="ElementShortName">op[5:0]</obj_property>
+      <obj_property name="ObjectShortName">op[5:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[15]" type="array">
-      <obj_property name="ElementShortName">[15][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[15][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/csr_exception_pc" type="array">
+      <obj_property name="ElementShortName">csr_exception_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_pc[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[14]" type="array">
-      <obj_property name="ElementShortName">[14][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[14][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/csr_exception_en" type="logic">
+      <obj_property name="ElementShortName">csr_exception_en</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_en</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[13]" type="array">
-      <obj_property name="ElementShortName">[13][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[13][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/csr_exception_privilege_mode" type="array">
+      <obj_property name="ElementShortName">csr_exception_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_privilege_mode[1:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[12]" type="array">
-      <obj_property name="ElementShortName">[12][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[12][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/id_exception_type" type="logic">
+      <obj_property name="ElementShortName">id_exception_type</obj_property>
+      <obj_property name="ObjectShortName">id_exception_type</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[11]" type="array">
-      <obj_property name="ElementShortName">[11][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[11][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/id_exception_code" type="array">
+      <obj_property name="ElementShortName">id_exception_code[31:0]</obj_property>
+      <obj_property name="ObjectShortName">id_exception_code[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/id_reg_file/regs[10]" type="array">
-      <obj_property name="ElementShortName">[10][31:0]</obj_property>
-      <obj_property name="ObjectShortName">[10][31:0]</obj_property>
+   <wvobject fp_name="/tb/dut/id_exception_privilege_mode" type="array">
+      <obj_property name="ElementShortName">id_exception_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">id_exception_privilege_mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_exception_en" type="logic">
+      <obj_property name="ElementShortName">id_exception_en</obj_property>
+      <obj_property name="ObjectShortName">id_exception_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_exception_pc" type="array">
+      <obj_property name="ElementShortName">id_exception_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">id_exception_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_exception_en" type="logic">
+      <obj_property name="ElementShortName">exe_exception_en</obj_property>
+      <obj_property name="ObjectShortName">exe_exception_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_exception_pc" type="array">
+      <obj_property name="ElementShortName">exe_exception_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">exe_exception_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_exception_privilege_mode" type="array">
+      <obj_property name="ElementShortName">exe_exception_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">exe_exception_privilege_mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_en" type="logic">
+      <obj_property name="ElementShortName">mem_exception_en</obj_property>
+      <obj_property name="ObjectShortName">mem_exception_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_pc" type="array">
+      <obj_property name="ElementShortName">mem_exception_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_exception_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_privilege_mode" type="array">
+      <obj_property name="ElementShortName">mem_exception_privilege_mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_exception_privilege_mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_detector/csr_exception_en_o" type="logic">
+      <obj_property name="ElementShortName">csr_exception_en_o</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_en_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_detector/csr_exception_pc_o" type="array">
+      <obj_property name="ElementShortName">csr_exception_pc_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_pc_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_exception_detector/csr_exception_privilege_mode_o" type="array">
+      <obj_property name="ElementShortName">csr_exception_privilege_mode_o[1:0]</obj_property>
+      <obj_property name="ObjectShortName">csr_exception_privilege_mode_o[1:0]</obj_property>
    </wvobject>
 </wave_config>

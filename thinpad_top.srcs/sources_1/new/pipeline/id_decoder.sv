@@ -27,6 +27,13 @@ module id_decoder #(
     output logic csr_we_o,
     output logic [1:0] csr_op_o, // 0 For Write, 1 For Set, 2 For Clear
     output logic [11:0] csr_addr_o,
+
+    output logic mret_en_o,
+    output logic ecall_ebreak_en_o,
+    output logic exception_type_o, // 1 For Interrupt, 0 For Exception
+    output logic [DATA_WIDTH-1:0] exception_code_o,
+    output logic [1:0] exception_privilege_mode_o,
+
     output logic [1:0] instruction_mode_o
     );
 
@@ -213,6 +220,12 @@ module id_decoder #(
 
         csr_we_o = 1'b0;
         csr_op_o = 2'b00;
+
+        mret_en_o = 1'b0;
+        ecall_ebreak_en_o = 1'b0;
+        exception_type_o = 1'b0;
+        exception_code_o = {DATA_WIDTH{1'b0}};
+        exception_privilege_mode_o = 2'b00;
 
         instruction_mode_o = 2'b00;
 
@@ -609,15 +622,52 @@ module id_decoder #(
 
                 reg_we_o = 1'b0;
 
+                ecall_ebreak_en_o = 1'b1;
+                exception_type_o = 1'b0;
+                exception_code_o = 32'h3;
+                exception_privilege_mode_o = 2'b11;
+
                 instruction_mode_o = 2'b11;
             end
 
             ECALL: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
 
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+
+                ecall_ebreak_en_o = 1'b1;
+                exception_type_o = 1'b0;
+                exception_code_o = 32'h8;
+                exception_privilege_mode_o = 2'b11;
+
+                instruction_mode_o = 2'b11;
             end
 
             MRET: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
 
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+
+                mret_en_o = 1'b1;
+                exception_privilege_mode_o = 2'b00;
+
+                instruction_mode_o = 2'b11;
             end
         endcase
     end

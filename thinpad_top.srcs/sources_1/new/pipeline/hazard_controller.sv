@@ -27,6 +27,9 @@ module hazard_controller #(
     input wire [1:0] id_instruction_mode_i,
     input wire [1:0] exe_instruction_mode_i,
     input wire [1:0] mem_instruction_mode_i,
+    input wire [1:0] writeback_instruction_mode_i,
+
+    input wire exception_en_i,
 
     output logic pc_sel_o,
     output logic pc_stall_o,
@@ -57,7 +60,7 @@ module hazard_controller #(
     assign pc_sel_o = br_miss_i;
 
     logic csr_mode;
-    assign csr_mode = (id_instruction_mode_i == 2'b11) || (exe_instruction_mode_i == 2'b11) || (mem_instruction_mode_i == 2'b11);
+    assign csr_mode = (id_instruction_mode_i == 2'b11) || (exe_instruction_mode_i == 2'b11) || (mem_instruction_mode_i == 2'b11) || (writeback_instruction_mode_i == 2'b11);
 
     always_comb begin
         pc_stall_o = 0;
@@ -126,7 +129,12 @@ module hazard_controller #(
         //* CSR Instr *//
         //* Stall the whole pipeline *//
         else if (csr_mode) begin
-            pc_stall_o = 1;
+            if (exception_en_i) begin
+                pc_stall_o = 0;
+            end
+            else begin
+                pc_stall_o = 1;
+            end
             if_id_stall_o = 0;
             id_exe_stall_o = 0;
             exe_mem_stall_o = 0;

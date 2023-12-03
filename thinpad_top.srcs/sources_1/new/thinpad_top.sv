@@ -121,12 +121,18 @@ module thinpad_top #(
 	logic [ADDR_WIDTH-1:0] if_pc;
 	logic [ADDR_WIDTH-1:0] if_pc_next;
 
+	logic [1:0] if_privilege_mode;
+	logic [1:0] if_privilege_mode_nxt;
+
 	if_pc_reg if_pc_reg (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
 		.pc_stall_i(pc_stall),
 		.pc_next_i(if_pc_next),
-		.pc_current_o(if_pc)
+		.privilege_mode_i(if_privilege_mode_nxt),
+
+		.pc_current_o(if_pc),
+		.privilege_mode_o(if_privilege_mode)
     );
 
 	logic [DATA_WIDTH-1:0] exe_alu_y;
@@ -134,12 +140,26 @@ module thinpad_top #(
 	logic [ADDR_WIDTH-1:0] if_jp_pc;
 	logic [ADDR_WIDTH-1:0] exe_jp_pc;
 
+	logic [ADDR_WIDTH-1:0] csr_exception_pc;
+
 	if_pc_mux if_pc_mux (
 		.pc_if(if_jp_pc),
 		.pc_exe(exe_jp_pc),
+		.pc_exception(csr_exception_pc),
+		.exception_en_i(csr_exception_en),
 		.pc_sel_i(pc_sel),
 		.pc_next_o(if_pc_next)
     );
+
+	logic csr_exception_en;
+	logic [1:0] csr_exception_privilege_mode;
+
+	if_priv_mode_mux if_priv_mode_mux (
+		.exception_en_i(csr_exception_en),
+		.if_privilege_mode_i(if_privilege_mode),
+		.exception_privilege_mode_i(csr_exception_privilege_mode),
+		.privilege_mode_o(if_privilege_mode_nxt)
+	);
 
 	logic [DATA_WIDTH-1:0] if_inst;
 	logic im_ready;
@@ -182,6 +202,8 @@ module thinpad_top #(
 	logic [ADDR_WIDTH-1:0] id_pc;
 	logic [DATA_WIDTH-1:0] id_inst;
 
+	logic [1:0] id_privilege_mode;
+
 	if_id_regs if_id_regs (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -196,7 +218,11 @@ module thinpad_top #(
 
 		// [EXE] ~ [MEM]
 		.pc_i(if_pc),
-		.pc_o(id_pc)
+		.pc_o(id_pc),
+
+		// [CSR]
+		.privilege_mode_i(if_privilege_mode),
+	    .privilege_mode_o(id_privilege_mode)
     );
 
 	//* ================= ID ================= *//
@@ -220,6 +246,12 @@ module thinpad_top #(
     logic id_csr_we;
     logic [1:0] id_csr_op;
     logic [11:0] id_csr_addr;
+
+	logic id_mret_en;
+	logic id_ecall_ebreak_en;
+	logic id_exception_type;
+	logic [DATA_WIDTH-1:0] id_exception_code;
+	logic [1:0] id_exception_privilege_mode;
     logic [1:0] id_instruction_mode;
 
  	id_decoder id_decoder (
@@ -248,6 +280,12 @@ module thinpad_top #(
 		.csr_we_o(id_csr_we),
 		.csr_op_o(id_csr_op),
 		.csr_addr_o(id_csr_addr),
+
+		.mret_en_o(id_mret_en),
+		.ecall_ebreak_en_o(id_ecall_ebreak_en),
+		.exception_type_o(id_exception_type),
+		.exception_code_o(id_exception_code),
+		.exception_privilege_mode_o(id_exception_privilege_mode),
 		.instruction_mode_o(id_instruction_mode)
     );
 
@@ -305,9 +343,15 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_csr_rdata;
 	logic [DATA_WIDTH-1:0] id_csr_wdata;
 
+	logic id_exception_en;
+	logic [ADDR_WIDTH-1:0] id_exception_pc;
+
 	id_csr_file id_csr_file (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
+
+		.pc_i(id_pc),
+		.privilege_mode_i(id_privilege_mode),
 
 		.csr_op_i(id_csr_op),
 		.csr_raddr_i(id_csr_addr),
@@ -315,6 +359,14 @@ module thinpad_top #(
 		.csr_we_i(writeback_csr_we),
 		.csr_waddr_i(writeback_csr_waddr),
 		.csr_wdata_i(writeback_csr_wdata),
+
+		.mret_en_i(id_mret_en),
+		.ecall_ebreak_en_i(id_ecall_ebreak_en),
+		.exception_type_i(id_exception_type),
+		.exception_code_i(id_exception_code),
+
+		.exception_en_o(id_exception_en),
+		.exception_pc_o(id_exception_pc),
 
 		.csr_rdata_o(id_csr_rdata),
 		.csr_wdata_o(id_csr_wdata)
@@ -352,6 +404,10 @@ module thinpad_top #(
 	logic [11:0] exe_csr_waddr;
 	logic [DATA_WIDTH-1:0] exe_csr_rdata;
 	logic [DATA_WIDTH-1:0] exe_csr_wdata;
+	logic exe_exception_en;
+	logic [ADDR_WIDTH-1:0] exe_exception_pc;
+	logic [1:0] exe_exception_privilege_mode;
+	logic [1:0] exe_privilege_mode;
     logic [1:0] exe_instruction_mode;
 
 	id_exe_regs id_exe_regs (
@@ -412,6 +468,14 @@ module thinpad_top #(
 		.csr_wdata_o(exe_csr_wdata),
 		.csr_rdata_i(id_csr_rdata),
 		.csr_rdata_o(exe_csr_rdata),
+		.exception_en_i(id_exception_en),
+		.exception_en_o(exe_exception_en),
+		.exception_pc_i(id_exception_pc),
+		.exception_pc_o(exe_exception_pc),
+		.privilege_mode_i(id_privilege_mode),
+		.privilege_mode_o(exe_privilege_mode),
+		.exception_privilege_mode_i(id_exception_privilege_mode),
+		.exception_privilege_mode_o(exe_exception_privilege_mode),
 		.instruction_mode_i(id_instruction_mode),
 		.instruction_mode_o(exe_instruction_mode)
 	);
@@ -474,6 +538,10 @@ module thinpad_top #(
     logic mem_csr_we;
 	logic [11:0] mem_csr_waddr;
 	logic [DATA_WIDTH-1:0] mem_csr_wdata;
+	logic mem_exception_en;
+	logic [ADDR_WIDTH-1:0] mem_exception_pc;
+	logic [1:0] mem_exception_privilege_mode;
+	logic [1:0] mem_privilege_mode;
     logic [1:0] mem_instruction_mode;
 
 	exe_mem_regs exe_mem_regs (
@@ -511,6 +579,14 @@ module thinpad_top #(
 		.csr_waddr_o(mem_csr_waddr),
 		.csr_wdata_i(exe_csr_wdata),
 		.csr_wdata_o(mem_csr_wdata),
+		.exception_en_i(exe_exception_en),
+		.exception_en_o(mem_exception_en),
+		.exception_pc_i(exe_exception_pc),
+		.exception_pc_o(mem_exception_pc),
+		.privilege_mode_i(exe_privilege_mode),
+		.privilege_mode_o(mem_privilege_mode),
+		.exception_privilege_mode_i(exe_exception_privilege_mode),
+		.exception_privilege_mode_o(mem_exception_privilege_mode),
 		.instruction_mode_i(exe_instruction_mode),
 		.instruction_mode_o(mem_instruction_mode)
 	);
@@ -558,6 +634,16 @@ module thinpad_top #(
 		.pc_i(mem_pc),
 		.writeback_mux_sel_i(mem_writeback_mux_sel),
 		.writeback_mux_o(mem_reg_dat)
+    );
+
+	mem_exception_detector mem_exception_detector (
+		.exception_en_i(mem_exception_en),
+		.exception_pc_i(mem_exception_pc),
+		.exception_privilege_mode_i(mem_exception_privilege_mode),
+
+		.csr_exception_en_o(csr_exception_en),
+		.csr_exception_pc_o(csr_exception_pc),
+		.csr_exception_privilege_mode_o(csr_exception_privilege_mode)
     );
 
 	//* =============== MEM-WB =============== *//
@@ -622,6 +708,9 @@ module thinpad_top #(
 		.id_instruction_mode_i(id_instruction_mode),
 		.exe_instruction_mode_i(exe_instruction_mode),
 		.mem_instruction_mode_i(mem_instruction_mode),
+		.writeback_instruction_mode_i(writeback_instruction_mode),
+
+		.exception_en_i(csr_exception_en),
 
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),

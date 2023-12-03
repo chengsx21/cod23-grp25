@@ -5,6 +5,9 @@ module id_csr_file #(
     input wire clk_i,
     input wire rst_i,
 
+    input wire [ADDR_WIDTH-1:0] pc_i,
+    input wire [1:0] privilege_mode_i,
+
     input wire [1:0] csr_op_i, // 0 For Write, 1 For Set, 2 For Clear
     input wire [11:0] csr_raddr_i,
     input wire [DATA_WIDTH-1:0] rs1_rdata_i,
@@ -13,6 +16,14 @@ module id_csr_file #(
     input wire [11:0] csr_waddr_i,
     input wire [DATA_WIDTH-1:0] csr_wdata_i,
 
+    input wire mret_en_i,
+
+    input wire ecall_ebreak_en_i,
+    input wire exception_type_i,
+    input wire [DATA_WIDTH-1:0] exception_code_i,
+
+    output logic exception_en_o,
+    output logic [ADDR_WIDTH-1:0] exception_pc_o,
     output logic [DATA_WIDTH-1:0] csr_rdata_o,
     output logic [DATA_WIDTH-1:0] csr_wdata_o
     );
@@ -24,7 +35,17 @@ module id_csr_file #(
     reg [DATA_WIDTH-1:0] mstatus;
     reg [DATA_WIDTH-1:0] mie;
     reg [DATA_WIDTH-1:0] mip;
-    reg mtval;
+
+    assign exception_en_o = ecall_ebreak_en_i | mret_en_i;
+
+    always_comb begin
+        if (ecall_ebreak_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else begin
+            exception_pc_o = mepc;
+        end
+    end
 
     logic [DATA_WIDTH-1:0] csr_rdata;
     assign csr_rdata_o = csr_rdata;
@@ -74,6 +95,11 @@ module id_csr_file #(
                 12'h304: mie <= csr_wdata_i;
                 12'h344: mip <= csr_wdata_i;
             endcase
+        end
+        else if (ecall_ebreak_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
+            mepc <= pc_i;
         end
     end 
 endmodule
