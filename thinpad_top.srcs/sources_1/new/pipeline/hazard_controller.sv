@@ -24,9 +24,9 @@ module hazard_controller #(
     input wire [ADDR_WIDTH-1:0] exe_pc_i,
     input wire [ADDR_WIDTH-1:0] alu_y_i,
 
-    input wire [1:0] id_privilege_mode_i,
-    input wire [1:0] exe_privilege_mode_i,
-    input wire [1:0] mem_privilege_mode_i,
+    input wire [1:0] id_instruction_mode_i,
+    input wire [1:0] exe_instruction_mode_i,
+    input wire [1:0] mem_instruction_mode_i,
 
     output logic pc_sel_o,
     output logic pc_stall_o,
@@ -57,7 +57,7 @@ module hazard_controller #(
     assign pc_sel_o = br_miss_i;
 
     logic csr_mode;
-    assign csr_mode = (id_privilege_mode_i == 2'b11) || (exe_privilege_mode_i == 2'b11) || (mem_privilege_mode_i == 2'b11);
+    assign csr_mode = (id_instruction_mode_i == 2'b11) || (exe_instruction_mode_i == 2'b11) || (mem_instruction_mode_i == 2'b11);
 
     always_comb begin
         pc_stall_o = 0;

@@ -220,7 +220,7 @@ module thinpad_top #(
     logic id_csr_we;
     logic [1:0] id_csr_op;
     logic [11:0] id_csr_addr;
-    logic [1:0] id_privilege_mode;
+    logic [1:0] id_instruction_mode;
 
  	id_decoder id_decoder (
 		.inst_i(id_inst),
@@ -248,7 +248,7 @@ module thinpad_top #(
 		.csr_we_o(id_csr_we),
 		.csr_op_o(id_csr_op),
 		.csr_addr_o(id_csr_addr),
-		.privilege_mode_o(id_privilege_mode)
+		.instruction_mode_o(id_instruction_mode)
     );
 
 	logic [DATA_WIDTH-1:0] id_imm;
@@ -352,7 +352,7 @@ module thinpad_top #(
 	logic [11:0] exe_csr_waddr;
 	logic [DATA_WIDTH-1:0] exe_csr_rdata;
 	logic [DATA_WIDTH-1:0] exe_csr_wdata;
-    logic [1:0] exe_privilege_mode;
+    logic [1:0] exe_instruction_mode;
 
 	id_exe_regs id_exe_regs (
 		.clk_i(sys_clk),
@@ -412,8 +412,8 @@ module thinpad_top #(
 		.csr_wdata_o(exe_csr_wdata),
 		.csr_rdata_i(id_csr_rdata),
 		.csr_rdata_o(exe_csr_rdata),
-		.privilege_mode_i(id_privilege_mode),
-		.privilege_mode_o(exe_privilege_mode)
+		.instruction_mode_i(id_instruction_mode),
+		.instruction_mode_o(exe_instruction_mode)
 	);
 
 	//* ================= EXE ================= *//
@@ -474,7 +474,7 @@ module thinpad_top #(
     logic mem_csr_we;
 	logic [11:0] mem_csr_waddr;
 	logic [DATA_WIDTH-1:0] mem_csr_wdata;
-    logic [1:0] mem_privilege_mode;
+    logic [1:0] mem_instruction_mode;
 
 	exe_mem_regs exe_mem_regs (
 		.clk_i(sys_clk),
@@ -511,8 +511,8 @@ module thinpad_top #(
 		.csr_waddr_o(mem_csr_waddr),
 		.csr_wdata_i(exe_csr_wdata),
 		.csr_wdata_o(mem_csr_wdata),
-		.privilege_mode_i(exe_privilege_mode),
-		.privilege_mode_o(mem_privilege_mode)
+		.instruction_mode_i(exe_instruction_mode),
+		.instruction_mode_o(mem_instruction_mode)
 	);
 
 	//* ================= MEM ================= *//
@@ -565,7 +565,7 @@ module thinpad_top #(
 	logic mem_writeback_stall;
 	logic mem_writeback_bubble;
 
-    logic [1:0] writeback_privilege_mode;
+    logic [1:0] writeback_instruction_mode;
 
 	mem_writeback_regs mem_writeback_regs (
 		.clk_i(sys_clk),
@@ -588,8 +588,8 @@ module thinpad_top #(
 		.csr_waddr_o(writeback_csr_waddr),
 		.csr_wdata_i(mem_csr_wdata),
 		.csr_wdata_o(writeback_csr_wdata),
-		.privilege_mode_i(mem_privilege_mode),
-		.privilege_mode_o(writeback_privilege_mode)
+		.instruction_mode_i(mem_instruction_mode),
+		.instruction_mode_o(writeback_instruction_mode)
 	);
 
 	//* ============== CONTROLLER ============== *//
@@ -619,9 +619,9 @@ module thinpad_top #(
 		.exe_pc_i(exe_pc),
 		.alu_y_i(exe_alu_y),
 
-		.id_privilege_mode_i(id_privilege_mode),
-		.exe_privilege_mode_i(exe_privilege_mode),
-		.mem_privilege_mode_i(mem_privilege_mode),
+		.id_instruction_mode_i(id_instruction_mode),
+		.exe_instruction_mode_i(exe_instruction_mode),
+		.mem_instruction_mode_i(mem_instruction_mode),
 
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),

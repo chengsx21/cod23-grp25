@@ -60,8 +60,8 @@ module id_exe_regs #(
     output logic [DATA_WIDTH-1:0] csr_wdata_o,
     input wire [DATA_WIDTH-1:0] csr_rdata_i,
     output logic [DATA_WIDTH-1:0] csr_rdata_o,
-    input wire [1:0] privilege_mode_i,
-    output logic [1:0] privilege_mode_o
+    input wire [1:0] instruction_mode_i,
+    output logic [1:0] instruction_mode_o
     );
 
     always_ff @(posedge clk_i) begin
@@ -93,7 +93,7 @@ module id_exe_regs #(
             csr_addr_o <= 0;
             csr_wdata_o <= 0;
             csr_rdata_o <= 0;
-            privilege_mode_o <= 0;
+            instruction_mode_o <= 0;
         end else if (stall_i) begin
             // Do nothing   
         end else if (bubble_i) begin
@@ -124,7 +124,7 @@ module id_exe_regs #(
             csr_addr_o <= 0;
             csr_wdata_o <= 0;
             csr_rdata_o <= 0;
-            privilege_mode_o <= 0;
+            instruction_mode_o <= 0;
         end else begin
             inst_o <= inst_i;
             imm_o <= imm_i;
@@ -151,7 +151,7 @@ module id_exe_regs #(
             csr_addr_o <= csr_addr_i;
             csr_wdata_o <= csr_wdata_i;
             csr_rdata_o <= csr_rdata_i;
-            privilege_mode_o <= privilege_mode_i;
+            instruction_mode_o <= instruction_mode_i;
         end
     end
 endmodule

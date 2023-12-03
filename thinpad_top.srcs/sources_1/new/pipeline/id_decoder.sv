@@ -27,7 +27,7 @@ module id_decoder #(
     output logic csr_we_o,
     output logic [1:0] csr_op_o, // 0 For Write, 1 For Set, 2 For Clear
     output logic [11:0] csr_addr_o,
-    output logic [1:0] privilege_mode_o
+    output logic [1:0] instruction_mode_o
     );
 
     // Follow the format of `lab3_tb.sv`
@@ -214,7 +214,7 @@ module id_decoder #(
         csr_we_o = 1'b0;
         csr_op_o = 2'b00;
 
-        privilege_mode_o = 2'b00;
+        instruction_mode_o = 2'b00;
 
         case (op)
             ADD: begin
@@ -555,7 +555,7 @@ module id_decoder #(
                 csr_we_o = 1'b1;
                 csr_op_o = 2'b00;
 
-                privilege_mode_o = 2'b11;
+                instruction_mode_o = 2'b11;
             end
 
             CSRRS: begin
@@ -574,7 +574,7 @@ module id_decoder #(
                 csr_we_o = (rs1_o != 5'b00000);
                 csr_op_o = 2'b01;
 
-                privilege_mode_o = 2'b11;
+                instruction_mode_o = 2'b11;
             end
 
             CSRRC: begin
@@ -593,11 +593,23 @@ module id_decoder #(
                 csr_we_o = (rs1_o != 5'b00000);
                 csr_op_o = 2'b10;
 
-                privilege_mode_o = 2'b11;
+                instruction_mode_o = 2'b11;
             end
 
             EBREAK: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
 
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+
+                instruction_mode_o = 2'b11;
             end
 
             ECALL: begin
