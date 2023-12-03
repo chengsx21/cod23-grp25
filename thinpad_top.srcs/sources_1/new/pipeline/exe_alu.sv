@@ -35,6 +35,8 @@ module exe_alu #(
             4'b1100: y_i = {b_i[DATA_WIDTH/2-1:0], a_i[DATA_WIDTH/2-1:0]};
             // 13 -> MINU
             4'b1101: y_i = a_i < b_i ? a_i : b_i;
+            // 14 -> SLTU
+            4'b1110: y_i = a_i < b_i;
             // 0 -> NOP
             default: y_i = {DATA_WIDTH{1'b0}};
         endcase

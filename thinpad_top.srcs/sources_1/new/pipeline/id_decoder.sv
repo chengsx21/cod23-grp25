@@ -9,7 +9,7 @@ module id_decoder #(
     output logic [4:0] rs2_o,
 
     output logic [2:0] br_op_o,
-    output logic [1:0] alu_a_mux_sel_o, // 0 For Rs1, 1 For PC, 2 For Zero
+    output logic [1:0] alu_a_mux_sel_o, // 0 For Rs1, 1 For PC, 2 For Zero, 3 For CSR
     output logic [1:0] alu_b_mux_sel_o, // 0 For Rs2, 1 For Imm, 2 For Zero
     output logic [3:0] alu_op_o,
 
@@ -21,7 +21,13 @@ module id_decoder #(
 
     // [MEM] ~ [WRITEBACK]
     output logic [4:0] rd_o,
-    output logic reg_we_o
+    output logic reg_we_o,
+
+    // [CSR]
+    output logic csr_we_o,
+    output logic [1:0] csr_op_o, // 0 For Write, 1 For Set, 2 For Clear
+    output logic [11:0] csr_addr_o,
+    output logic [1:0] privilege_mode_o
     );
 
     // Follow the format of `lab3_tb.sv`
@@ -48,23 +54,29 @@ module id_decoder #(
         XOR = 6'b010011,
         PCNT = 6'b010100,
         PACK = 6'b010101,
-        MINU = 6'b010110
+        MINU = 6'b010110,
+        CSRRW = 6'b010111,
+        CSRRS = 6'b011000,
+        CSRRC = 6'b011001,
+        EBREAK = 6'b011010,
+        ECALL = 6'b011011,
+        MRET = 6'b011100,
+        SLTU = 6'b011101
     } Opcode_t;
     Opcode_t op;
 
     assign rs1_o = inst_i[19:15];
     assign rs2_o = inst_i[24:20];
     assign rd_o = inst_i[11:7];
+    assign csr_addr_o = inst_i[31:20];
 
     logic [6:0] opcode;
     logic [6:0] func7;
     logic [2:0] func3;
-    logic [4:0] rs2;
 
     assign opcode = inst_i[6:0];
     assign func7 = inst_i[31:25];
     assign func3 = inst_i[14:12];
-    assign rs2 = inst_i[24:20];
 
     always_comb begin
         op = DEFAULT;
@@ -116,7 +128,7 @@ module id_decoder #(
                 else if (func3 == 3'b101 && func7 == 7'b0000000) begin
                     op = SRLI;
                 end
-                else if (func3 == 3'b001 && func7 == 7'b0110000 && rs2 == 5'b00010) begin
+                else if (func3 == 3'b001 && func7 == 7'b0110000 && rs2_o == 5'b00010) begin
                     op = PCNT;
                 end
             end
@@ -140,6 +152,9 @@ module id_decoder #(
                 else if (func3 == 3'b110 && func7 == 7'b0000101) begin
                     op = MINU;
                 end
+                else if (func3 == 3'b011 && func7 == 7'b0000000) begin
+                    op = SLTU;
+                end
             end
 
             7'b0010111: begin
@@ -153,6 +168,27 @@ module id_decoder #(
             7'b1100111: begin
                 if (func3 == 3'b000) begin
                     op = JALR;
+                end
+            end
+
+            7'b1110011: begin
+                if (func3 == 3'b001) begin
+                    op = CSRRW;
+                end
+                else if (func3 == 3'b010) begin
+                    op = CSRRS;
+                end
+                else if (func3 == 3'b011) begin
+                    op = CSRRC;
+                end
+                else if (inst_i == 32'b00000000_00010000_00000000_01110011) begin
+                    op = EBREAK;
+                end
+                else if (inst_i == 32'b00000000_00000000_00000000_01110011) begin
+                    op = ECALL;
+                end
+                else if (inst_i == 32'b00110000_00100000_00000000_01110011) begin
+                    op = MRET;
                 end
             end
 
@@ -174,6 +210,11 @@ module id_decoder #(
         writeback_mux_sel_o = 2'b01;
 
         reg_we_o = 1'b0;
+
+        csr_we_o = 1'b0;
+        csr_op_o = 2'b00;
+
+        privilege_mode_o = 2'b00;
 
         case (op)
             ADD: begin
@@ -482,6 +523,89 @@ module id_decoder #(
                 writeback_mux_sel_o = 2'b01;
 
                 reg_we_o = 1'b1;
+            end
+            
+            SLTU: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b00;
+                alu_op_o = 4'b1110;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+            end
+
+            CSRRW: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b11;
+                alu_b_mux_sel_o = 2'b10;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = (rd_o != 5'b00000);
+
+                csr_we_o = 1'b1;
+                csr_op_o = 2'b00;
+
+                privilege_mode_o = 2'b11;
+            end
+
+            CSRRS: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b11;
+                alu_b_mux_sel_o = 2'b10;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+
+                csr_we_o = (rs1_o != 5'b00000);
+                csr_op_o = 2'b01;
+
+                privilege_mode_o = 2'b11;
+            end
+
+            CSRRC: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b11;
+                alu_b_mux_sel_o = 2'b10;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b1;
+
+                csr_we_o = (rs1_o != 5'b00000);
+                csr_op_o = 2'b10;
+
+                privilege_mode_o = 2'b11;
+            end
+
+            EBREAK: begin
+
+            end
+
+            ECALL: begin
+
+            end
+
+            MRET: begin
+
             end
         endcase
     end

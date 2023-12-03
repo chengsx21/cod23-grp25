@@ -217,6 +217,10 @@ module thinpad_top #(
 	logic [4:0] id_rd;
 	logic id_reg_we;
 
+    logic id_csr_we;
+    logic [1:0] id_csr_op;
+    logic [11:0] id_csr_addr;
+    logic [1:0] id_privilege_mode;
 
  	id_decoder id_decoder (
 		.inst_i(id_inst),
@@ -238,7 +242,13 @@ module thinpad_top #(
 
 		// [MEM] ~ [WRITEBACK]
 		.rd_o(id_rd),
-		.reg_we_o(id_reg_we)
+		.reg_we_o(id_reg_we),
+
+		// [CSR]
+		.csr_we_o(id_csr_we),
+		.csr_op_o(id_csr_op),
+		.csr_addr_o(id_csr_addr),
+		.privilege_mode_o(id_privilege_mode)
     );
 
 	logic [DATA_WIDTH-1:0] id_imm;
@@ -289,6 +299,27 @@ module thinpad_top #(
 		.rdata_b_o(rs2_dat)
 	);
 
+	logic writeback_csr_we;
+	logic [11:0] writeback_csr_waddr;
+	logic [DATA_WIDTH-1:0] writeback_csr_wdata;
+	logic [DATA_WIDTH-1:0] id_csr_rdata;
+	logic [DATA_WIDTH-1:0] id_csr_wdata;
+
+	id_csr_file id_csr_file (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.csr_op_i(id_csr_op),
+		.csr_raddr_i(id_csr_addr),
+		.rs1_rdata_i(rs1_dat),
+		.csr_we_i(writeback_csr_we),
+		.csr_waddr_i(writeback_csr_waddr),
+		.csr_wdata_i(writeback_csr_wdata),
+
+		.csr_rdata_o(id_csr_rdata),
+		.csr_wdata_o(id_csr_wdata)
+		);
+
 	//* =============== ID-EXE =============== *//
 
 	logic id_exe_stall;
@@ -316,6 +347,12 @@ module thinpad_top #(
 
 	logic [4:0] exe_rd;
 	logic exe_reg_we;
+
+    logic exe_csr_we;
+	logic [11:0] exe_csr_waddr;
+	logic [DATA_WIDTH-1:0] exe_csr_rdata;
+	logic [DATA_WIDTH-1:0] exe_csr_wdata;
+    logic [1:0] exe_privilege_mode;
 
 	id_exe_regs id_exe_regs (
 		.clk_i(sys_clk),
@@ -364,7 +401,19 @@ module thinpad_top #(
 		.rd_i(id_rd),
 		.rd_o(exe_rd),
 		.reg_we_i(id_reg_we),
-		.reg_we_o(exe_reg_we)
+		.reg_we_o(exe_reg_we),
+
+		// [CSR]
+		.csr_we_i(id_csr_we),
+		.csr_we_o(exe_csr_we),
+		.csr_addr_i(id_csr_addr),
+		.csr_addr_o(exe_csr_waddr),
+		.csr_wdata_i(id_csr_wdata),
+		.csr_wdata_o(exe_csr_wdata),
+		.csr_rdata_i(id_csr_rdata),
+		.csr_rdata_o(exe_csr_rdata),
+		.privilege_mode_i(id_privilege_mode),
+		.privilege_mode_o(exe_privilege_mode)
 	);
 
 	//* ================= EXE ================= *//
@@ -385,6 +434,7 @@ module thinpad_top #(
 	exe_alu_a_mux exe_alu_a_mux (
 		.rs1_dat_i(exe_rs1_dat),
 		.pc_i(exe_pc),
+		.csr_dat_i(exe_csr_rdata),
 		.alu_a_sel_i(exe_alu_a_mux_sel),
 		.alu_a_o(exe_alu_a)
     );
@@ -421,6 +471,11 @@ module thinpad_top #(
 	logic [4:0] mem_rd;
 	logic mem_reg_we;
 
+    logic mem_csr_we;
+	logic [11:0] mem_csr_waddr;
+	logic [DATA_WIDTH-1:0] mem_csr_wdata;
+    logic [1:0] mem_privilege_mode;
+
 	exe_mem_regs exe_mem_regs (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -447,7 +502,17 @@ module thinpad_top #(
 		.rd_i(exe_rd),
 		.rd_o(mem_rd),
 		.reg_we_i(exe_reg_we),
-		.reg_we_o(mem_reg_we)
+		.reg_we_o(mem_reg_we),
+
+		// [CSR]
+		.csr_we_i(exe_csr_we),
+		.csr_we_o(mem_csr_we),
+		.csr_waddr_i(exe_csr_waddr),
+		.csr_waddr_o(mem_csr_waddr),
+		.csr_wdata_i(exe_csr_wdata),
+		.csr_wdata_o(mem_csr_wdata),
+		.privilege_mode_i(exe_privilege_mode),
+		.privilege_mode_o(mem_privilege_mode)
 	);
 
 	//* ================= MEM ================= *//
@@ -500,6 +565,8 @@ module thinpad_top #(
 	logic mem_writeback_stall;
 	logic mem_writeback_bubble;
 
+    logic [1:0] writeback_privilege_mode;
+
 	mem_writeback_regs mem_writeback_regs (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -512,7 +579,17 @@ module thinpad_top #(
 		.rd_i(mem_rd),
 		.rd_o(writeback_rd),
 		.reg_we_i(mem_reg_we),
-		.reg_we_o(writeback_reg_we)
+		.reg_we_o(writeback_reg_we),
+
+		// [CSR]
+		.csr_we_i(mem_csr_we),
+		.csr_we_o(writeback_csr_we),
+		.csr_waddr_i(mem_csr_waddr),
+		.csr_waddr_o(writeback_csr_waddr),
+		.csr_wdata_i(mem_csr_wdata),
+		.csr_wdata_o(writeback_csr_wdata),
+		.privilege_mode_i(mem_privilege_mode),
+		.privilege_mode_o(writeback_privilege_mode)
 	);
 
 	//* ============== CONTROLLER ============== *//
@@ -541,6 +618,10 @@ module thinpad_top #(
 		.id_pc_i(id_pc),
 		.exe_pc_i(exe_pc),
 		.alu_y_i(exe_alu_y),
+
+		.id_privilege_mode_i(id_privilege_mode),
+		.exe_privilege_mode_i(exe_privilege_mode),
+		.mem_privilege_mode_i(mem_privilege_mode),
 
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="2142138fs"></ZoomStartTime>
+      <ZoomEndTime time="2549315fs"></ZoomEndTime>
+      <Cursor1Time time="2294665fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="135"></NameColumnWidth>
+      <ValueColumnWidth column_width="90"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="25" />
+   <wvobject fp_name="/tb/clk_50M" type="logic">
+      <obj_property name="ElementShortName">clk_50M</obj_property>
+      <obj_property name="ObjectShortName">clk_50M</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/sys_clk" type="logic">
+      <obj_property name="ElementShortName">sys_clk</obj_property>
+      <obj_property name="ObjectShortName">sys_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_csr_file/mtvec" type="array">
+      <obj_property name="ElementShortName">mtvec[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mtvec[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_csr_file/mie" type="array">
+      <obj_property name="ElementShortName">mie[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mie[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_csr_file/mip" type="array">
+      <obj_property name="ElementShortName">mip[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mip[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_pc" type="array">
+      <obj_property name="ElementShortName">if_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">if_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_pc" type="array">
+      <obj_property name="ElementShortName">id_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">id_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_pc" type="array">
+      <obj_property name="ElementShortName">exe_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">exe_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_pc" type="array">
+      <obj_property name="ElementShortName">mem_pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/pc_stall" type="logic">
+      <obj_property name="ElementShortName">pc_stall</obj_property>
+      <obj_property name="ObjectShortName">pc_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_id_stall" type="logic">
+      <obj_property name="ElementShortName">if_id_stall</obj_property>
+      <obj_property name="ObjectShortName">if_id_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_exe_stall" type="logic">
+      <obj_property name="ElementShortName">id_exe_stall</obj_property>
+      <obj_property name="ObjectShortName">id_exe_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_mem_stall" type="logic">
+      <obj_property name="ElementShortName">exe_mem_stall</obj_property>
+      <obj_property name="ObjectShortName">exe_mem_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_writeback_stall" type="logic">
+      <obj_property name="ElementShortName">mem_writeback_stall</obj_property>
+      <obj_property name="ObjectShortName">mem_writeback_stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_id_bubble" type="logic">
+      <obj_property name="ElementShortName">if_id_bubble</obj_property>
+      <obj_property name="ObjectShortName">if_id_bubble</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_exe_bubble" type="logic">
+      <obj_property name="ElementShortName">id_exe_bubble</obj_property>
+      <obj_property name="ObjectShortName">id_exe_bubble</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/exe_mem_bubble" type="logic">
+      <obj_property name="ElementShortName">exe_mem_bubble</obj_property>
+      <obj_property name="ObjectShortName">exe_mem_bubble</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_writeback_bubble" type="logic">
+      <obj_property name="ElementShortName">mem_writeback_bubble</obj_property>
+      <obj_property name="ObjectShortName">mem_writeback_bubble</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[16]" type="array">
+      <obj_property name="ElementShortName">[16][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[16][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[15]" type="array">
+      <obj_property name="ElementShortName">[15][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[15][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[14]" type="array">
+      <obj_property name="ElementShortName">[14][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[14][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[13]" type="array">
+      <obj_property name="ElementShortName">[13][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[13][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[12]" type="array">
+      <obj_property name="ElementShortName">[12][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[12][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[11]" type="array">
+      <obj_property name="ElementShortName">[11][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[11][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[10]" type="array">
+      <obj_property name="ElementShortName">[10][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[10][31:0]</obj_property>
+   </wvobject>
+</wave_config>

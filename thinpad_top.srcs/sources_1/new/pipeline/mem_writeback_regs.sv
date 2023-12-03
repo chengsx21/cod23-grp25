@@ -13,7 +13,17 @@ module mem_writeback_regs #(
     input wire [4:0] rd_i,
     output logic [4:0] rd_o,
     input wire reg_we_i,
-    output logic reg_we_o
+    output logic reg_we_o,
+
+    // [CSR]
+    input wire csr_we_i,
+    output logic csr_we_o,
+    input wire [11:0] csr_waddr_i,
+    output logic [11:0] csr_waddr_o,
+    input wire [DATA_WIDTH-1:0] csr_wdata_i,
+    output logic [DATA_WIDTH-1:0] csr_wdata_o,
+    input wire [1:0] privilege_mode_i,
+    output logic [1:0] privilege_mode_o
     );
 
     always_ff @(posedge clk_i) begin
@@ -21,14 +31,31 @@ module mem_writeback_regs #(
             writeback_data_o <= 0;
             rd_o <= 0;
             reg_we_o <= 0;
+
+            csr_we_o <= 0;
+            csr_waddr_o <= 0;
+            csr_wdata_o <= 0;
+            privilege_mode_o <= 0;
+        end else if (stall_i) begin
+            // Do nothing
         end else if (bubble_i) begin
             writeback_data_o <= 0;
             rd_o <= 0;
             reg_we_o <= 0;
+
+            csr_we_o <= 0;
+            csr_waddr_o <= 0;
+            csr_wdata_o <= 0;
+            privilege_mode_o <= 0;
         end else begin
             writeback_data_o <= writeback_data_i;
             rd_o <= rd_i;
             reg_we_o <= reg_we_i;
+
+            csr_we_o <= csr_we_i;
+            csr_waddr_o <= csr_waddr_i;
+            csr_wdata_o <= csr_wdata_i;
+            privilege_mode_o <= privilege_mode_i;
         end
     end
 endmodule

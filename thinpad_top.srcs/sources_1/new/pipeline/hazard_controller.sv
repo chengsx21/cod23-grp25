@@ -24,6 +24,10 @@ module hazard_controller #(
     input wire [ADDR_WIDTH-1:0] exe_pc_i,
     input wire [ADDR_WIDTH-1:0] alu_y_i,
 
+    input wire [1:0] id_privilege_mode_i,
+    input wire [1:0] exe_privilege_mode_i,
+    input wire [1:0] mem_privilege_mode_i,
+
     output logic pc_sel_o,
     output logic pc_stall_o,
     output logic if_id_stall_o,
@@ -45,14 +49,15 @@ module hazard_controller #(
         DM = 3'b001,
         BR = 3'b010,
         RW = 3'b011,
-        IM = 3'b100
+        CSR = 3'b100,
+        IM = 3'b101
     } hazard_t;
     hazard_t hazard_type;
 
     assign pc_sel_o = br_miss_i;
-    // assign exe_raw_stall = exe_reg_we_i && exe_rd_i && (exe_rd_i == id_rs1_i || exe_rd_i == id_rs2_i);
-    // assign mem_raw_stall = mem_reg_we_i && mem_rd_i && (mem_rd_i == id_rs1_i || mem_rd_i == id_rs2_i);
-    // assign writeback_raw_stall = writeback_reg_we_i && writeback_rd_i && (writeback_rd_i == id_rs1_i || writeback_rd_i == id_rs2_i);
+
+    logic csr_mode;
+    assign csr_mode = (id_privilege_mode_i == 2'b11) || (exe_privilege_mode_i == 2'b11) || (mem_privilege_mode_i == 2'b11);
 
     always_comb begin
         pc_stall_o = 0;
@@ -116,6 +121,23 @@ module hazard_controller #(
             mem_wb_bubble_o = 0;
 
             hazard_type = RW;
+        end
+
+        //* CSR Instr *//
+        //* Stall the whole pipeline *//
+        else if (csr_mode) begin
+            pc_stall_o = 1;
+            if_id_stall_o = 0;
+            id_exe_stall_o = 0;
+            exe_mem_stall_o = 0;
+            mem_wb_stall_o = 0;
+
+            if_id_bubble_o = 1;
+            id_exe_bubble_o = 0;
+            exe_mem_bubble_o = 0;
+            mem_wb_bubble_o = 0;
+
+            hazard_type = CSR;
         end
 
         //* IM not Ready *//
