@@ -100,7 +100,7 @@ module id_csr_file #(
         end
         else if (timer_interrupt_i & privilege_mode_i != 2'b11) begin
             mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
-            mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
+            mcause <= 32'h8000_0007;
             mepc <= pc_i + 4;
         end
         else if (csr_we_i) begin
