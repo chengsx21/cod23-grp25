@@ -11,7 +11,7 @@ module mtime_reg_controller #(
 
     output logic [2*DATA_WIDTH-1:0] mtime_o,
     output logic [2*DATA_WIDTH-1:0] mtimecmp_o,
-    output logic interrupt_en_o
+    output logic timer_interrupt_o
     );
 
     logic [2*DATA_WIDTH-1:0] mtime_reg;
@@ -20,7 +20,7 @@ module mtime_reg_controller #(
 
     assign mtime_o = mtime_reg;
     assign mtimecmp_o = mtimecmp_reg;
-    assign interrupt_en_o = (mtime_reg >= mtimecmp_reg);
+    assign timer_interrupt_o = (mtime_reg >= mtimecmp_reg);
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin

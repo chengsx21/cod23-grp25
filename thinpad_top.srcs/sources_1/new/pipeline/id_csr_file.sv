@@ -16,11 +16,15 @@ module id_csr_file #(
     input wire [11:0] csr_waddr_i,
     input wire [DATA_WIDTH-1:0] csr_wdata_i,
 
-    input wire mret_en_i,
+    input wire timer_interrupt_i,
 
+    input wire mret_en_i,
     input wire ecall_ebreak_en_i,
     input wire exception_type_i,
     input wire [DATA_WIDTH-1:0] exception_code_i,
+
+    output logic interrupt_en_o,
+    output logic [ADDR_WIDTH-1:0] interrupt_pc_o,
 
     output logic exception_en_o,
     output logic [ADDR_WIDTH-1:0] exception_pc_o,
@@ -36,15 +40,25 @@ module id_csr_file #(
     reg [DATA_WIDTH-1:0] mie;
     reg [DATA_WIDTH-1:0] mip;
 
-    assign exception_en_o = ecall_ebreak_en_i | mret_en_i;
+    assign exception_en_o = (ecall_ebreak_en_i | mret_en_i);
 
     always_comb begin
         if (ecall_ebreak_en_i) begin
             exception_pc_o = mtvec;
         end
-        else begin
+        else if (mret_en_i) begin
             exception_pc_o = mepc;
         end
+        else begin
+            exception_pc_o = {ADDR_WIDTH{1'b0}};
+        end
+    end
+
+    assign mip = (timer_interrupt_i? 32'h0000_0080: 32'h0000_0000);
+
+    always_comb begin
+        interrupt_en_o = mie[7] & mip[7] & (privilege_mode_i != 2'b11);
+        interrupt_pc_o = mtvec;
     end
 
     logic [DATA_WIDTH-1:0] csr_rdata;
@@ -83,7 +97,11 @@ module id_csr_file #(
             mcause <= {DATA_WIDTH{1'b0}};
             mstatus <= {DATA_WIDTH{1'b0}};
             mie <= {DATA_WIDTH{1'b0}};
-            mip <= {DATA_WIDTH{1'b0}};
+        end
+        else if (timer_interrupt_i & privilege_mode_i != 2'b11) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
+            mepc <= pc_i + 4;
         end
         else if (csr_we_i) begin
             case (csr_waddr_i)
@@ -93,7 +111,6 @@ module id_csr_file #(
                 12'h342: mcause <= csr_wdata_i;
                 12'h300: mstatus <= csr_wdata_i;
                 12'h304: mie <= csr_wdata_i;
-                12'h344: mip <= csr_wdata_i;
             endcase
         end
         else if (ecall_ebreak_en_i) begin

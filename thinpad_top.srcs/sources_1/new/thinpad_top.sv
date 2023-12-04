@@ -345,6 +345,8 @@ module thinpad_top #(
 
 	logic id_exception_en;
 	logic [ADDR_WIDTH-1:0] id_exception_pc;
+	logic mtime_interrupt_en;
+	logic [ADDR_WIDTH-1:0] mtime_interrupt_pc;
 
 	id_csr_file id_csr_file (
 		.clk_i(sys_clk),
@@ -360,10 +362,15 @@ module thinpad_top #(
 		.csr_waddr_i(writeback_csr_waddr),
 		.csr_wdata_i(writeback_csr_wdata),
 
+		.timer_interrupt_i(timer_interrupt),
+
 		.mret_en_i(id_mret_en),
 		.ecall_ebreak_en_i(id_ecall_ebreak_en),
 		.exception_type_i(id_exception_type),
 		.exception_code_i(id_exception_code),
+
+		.interrupt_en_o(mtime_interrupt_en),
+		.interrupt_pc_o(mtime_interrupt_pc),
 
 		.exception_en_o(id_exception_en),
 		.exception_pc_o(id_exception_pc),
@@ -648,6 +655,9 @@ module thinpad_top #(
 		.exception_pc_i(mem_exception_pc),
 		.exception_privilege_mode_i(mem_exception_privilege_mode),
 
+		.interrupt_en_i(mtime_interrupt_en),
+		.interrupt_pc_i(mtime_interrupt_pc),
+
 		.csr_exception_en_o(csr_exception_en),
 		.csr_exception_pc_o(csr_exception_pc),
 		.csr_exception_privilege_mode_o(csr_exception_privilege_mode)
@@ -693,7 +703,7 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] mt_mtime_wdata;
 	logic [2*DATA_WIDTH-1:0] mt_mtime;
 	logic [2*DATA_WIDTH-1:0] mt_mtimecmp;
-	logic interrupt_en;
+	logic timer_interrupt;
 
 	mtime_reg_controller mtime_reg_controller (
 		.clk_i(sys_clk),
@@ -706,7 +716,7 @@ module thinpad_top #(
 
 		.mtime_o(mt_mtime),
 		.mtimecmp_o(mt_mtimecmp),
-		.interrupt_en_o(interrupt_en)
+		.timer_interrupt_o(timer_interrupt)
 	);
 
 	logic exe_br_miss;
@@ -740,6 +750,7 @@ module thinpad_top #(
 		.writeback_instruction_mode_i(writeback_instruction_mode),
 
 		.exception_en_i(csr_exception_en),
+		.interrupt_en_i(mtime_interrupt_en),
 
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),

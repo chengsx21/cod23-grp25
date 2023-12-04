@@ -103,7 +103,7 @@ module id_exe_regs #(
             csr_rdata_o <= 0;
             exception_en_o <= 0;
             exception_pc_o <= 0;
-            privilege_mode_o <= 0;
+            privilege_mode_o <= 2'b11;
             exception_privilege_mode_o <= 0;
             instruction_mode_o <= 0;
         end else if (stall_i) begin
