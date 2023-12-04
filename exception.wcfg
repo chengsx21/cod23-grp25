@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1943833fs"></ZoomStartTime>
-      <ZoomEndTime time="2230834fs"></ZoomEndTime>
-      <Cursor1Time time="2070000fs"></Cursor1Time>
+      <ZoomStartTime time="2085400fs"></ZoomStartTime>
+      <ZoomEndTime time="2206401fs"></ZoomEndTime>
+      <Cursor1Time time="2170000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="228"></NameColumnWidth>
-      <ValueColumnWidth column_width="113"></ValueColumnWidth>
+      <ValueColumnWidth column_width="95"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="30" />
+   <WVObjectSize size="37" />
    <wvobject fp_name="/tb/clk_50M" type="logic">
       <obj_property name="ElementShortName">clk_50M</obj_property>
       <obj_property name="ObjectShortName">clk_50M</obj_property>
@@ -48,6 +48,10 @@
       <obj_property name="ElementShortName">mem_pc[31:0]</obj_property>
       <obj_property name="ObjectShortName">mem_pc[31:0]</obj_property>
    </wvobject>
+   <wvobject fp_name="/tb/dut/hazard_controller/hazard_type" type="array">
+      <obj_property name="ElementShortName">hazard_type[2:0]</obj_property>
+      <obj_property name="ObjectShortName">hazard_type[2:0]</obj_property>
+   </wvobject>
    <wvobject fp_name="/tb/dut/pc_stall" type="logic">
       <obj_property name="ElementShortName">pc_stall</obj_property>
       <obj_property name="ObjectShortName">pc_stall</obj_property>
@@ -71,6 +75,30 @@
    <wvobject fp_name="/tb/dut/id_decoder/op" type="array">
       <obj_property name="ElementShortName">op[5:0]</obj_property>
       <obj_property name="ObjectShortName">op[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mtime_reg_controller/mtime_reg" type="array">
+      <obj_property name="ElementShortName">mtime_reg[63:0]</obj_property>
+      <obj_property name="ObjectShortName">mtime_reg[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mtime_reg_controller/mtimecmp_reg" type="array">
+      <obj_property name="ElementShortName">mtimecmp_reg[63:0]</obj_property>
+      <obj_property name="ObjectShortName">mtimecmp_reg[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[7]" type="array">
+      <obj_property name="ElementShortName">[7][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[7][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[6]" type="array">
+      <obj_property name="ElementShortName">[6][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[6][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs[5]" type="array">
+      <obj_property name="ElementShortName">[5][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[5][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_dm_master/dm_ready_o" type="logic">
+      <obj_property name="ElementShortName">dm_ready_o</obj_property>
+      <obj_property name="ObjectShortName">dm_ready_o</obj_property>
    </wvobject>
    <wvobject fp_name="/tb/dut/csr_exception_pc" type="array">
       <obj_property name="ElementShortName">csr_exception_pc[31:0]</obj_property>

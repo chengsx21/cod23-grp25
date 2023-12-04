@@ -616,6 +616,13 @@ module thinpad_top #(
 		.dm_dat_o(mem_dm_dat),
 		.dm_ready_o(dm_ready),
 
+		.mt_mtime_i(mt_mtime),
+		.mt_mtimecmp_i(mt_mtimecmp),
+		.mt_mtime_we_o(mt_mtime_we),
+		.mt_mtimecmp_we_o(mt_mtimecmp_we),
+		.mt_high_we_o(mt_high_we),
+		.mt_mtime_wdata_o(mt_mtime_wdata),
+
 		.wb_cyc_o(wb1_cyc_o),
 		.wb_stb_o(wb1_stb_o),
 		.wb_ack_i(wb1_ack_i),
@@ -679,6 +686,28 @@ module thinpad_top #(
 	);
 
 	//* ============== CONTROLLER ============== *//
+
+	logic mt_mtime_we;
+	logic mt_mtimecmp_we;
+	logic mt_high_we;
+	logic [DATA_WIDTH-1:0] mt_mtime_wdata;
+	logic [2*DATA_WIDTH-1:0] mt_mtime;
+	logic [2*DATA_WIDTH-1:0] mt_mtimecmp;
+	logic interrupt_en;
+
+	mtime_reg_controller mtime_reg_controller (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.mtime_we_i(mt_mtime_we),
+		.mtimecmp_we_i(mt_mtimecmp_we),
+		.mtime_wdata_i(mt_mtime_wdata),
+		.high_we_i(mt_high_we),
+
+		.mtime_o(mt_mtime),
+		.mtimecmp_o(mt_mtimecmp),
+		.interrupt_en_o(interrupt_en)
+	);
 
 	logic exe_br_miss;
 

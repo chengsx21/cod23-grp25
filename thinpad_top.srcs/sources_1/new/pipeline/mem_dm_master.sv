@@ -12,6 +12,14 @@ module mem_dm_master #(
     output logic [DATA_WIDTH-1:0] dm_dat_o,
     output logic dm_ready_o,
 
+    // Mtimer Interface Signals
+    input wire [2*DATA_WIDTH-1:0] mt_mtime_i,
+    input wire [2*DATA_WIDTH-1:0] mt_mtimecmp_i,
+    output logic mt_mtime_we_o,
+    output logic mt_mtimecmp_we_o,
+    output logic mt_high_we_o,
+    output logic [DATA_WIDTH-1:0] mt_mtime_wdata_o,
+
     // Wishbone Interface Signals
     output logic wb_cyc_o,
     output logic wb_stb_o,
@@ -35,6 +43,7 @@ module mem_dm_master #(
 
     logic dm_fetch_identical;
     logic dm_fetch_ready;
+    logic [DATA_WIDTH-1:0] mt_mtime_rdata;
 
     //  Follow the Code in File `if_im_master.sv`
     assign dm_fetch_identical = (dm_en_i == dm_en_reg) && (dm_we_i == dm_we_reg) && (dm_dat_width_i == dm_dat_width_reg) && (dm_adr_i == dm_adr_reg) && (dm_dat_i == dm_dat_i_reg);
@@ -65,6 +74,53 @@ module mem_dm_master #(
         end
     end
 
+    always_comb begin
+        // Mtimer Interface Signals
+        mt_mtime_we_o = 1'b0;
+        mt_mtimecmp_we_o = 1'b0;
+        mt_high_we_o = 1'b0;
+        mt_mtime_wdata_o = dm_dat_i;
+        mt_mtime_rdata = 32'h0000_0000;
+
+        if (dm_we_i) begin
+            case (dm_adr_i)
+                32'h0200bff8: begin
+                    mt_mtime_we_o = 1'b1;
+                    mt_high_we_o = 1'b0;
+                end
+                32'h0200bffc: begin
+                    mt_mtime_we_o = 1'b1;
+                    mt_high_we_o = 1'b1;
+                end
+                32'h02004000: begin
+                    mt_mtimecmp_we_o = 1'b1;
+                    mt_high_we_o = 1'b0;
+                end
+                32'h02004004: begin
+                    mt_mtimecmp_we_o = 1'b1;
+                    mt_high_we_o = 1'b1;
+                end
+            endcase
+        end
+
+        else begin
+            case (dm_adr_i)
+                32'h0200bff8: begin
+                    mt_mtime_rdata = mt_mtime_i[DATA_WIDTH-1:0];
+                end
+                32'h0200bffc: begin
+                    mt_mtime_rdata = mt_mtime_i[2*DATA_WIDTH-1:DATA_WIDTH];
+                end
+                32'h02004000: begin
+                    mt_mtime_rdata = mt_mtimecmp_i[DATA_WIDTH-1:0];
+                end
+                32'h02004004: begin
+                    mt_mtime_rdata = mt_mtimecmp_i[2*DATA_WIDTH-1:DATA_WIDTH];
+                end
+            endcase
+        end
+    end
+
     assign wb_cyc_o = wb_stb_o;
 
     always_ff @ (posedge clk_i) begin
@@ -89,38 +145,45 @@ module mem_dm_master #(
                 2'b00: begin
                     //* State Init *//
                     if (dm_en_i) begin
-                        wb_ack_reg <= 1'b0;
                         dm_en_reg <= dm_en_i;
                         dm_we_reg <= dm_we_i;
                         dm_dat_width_reg <= dm_dat_width_i;
                         dm_adr_reg <= dm_adr_i;
                         dm_dat_i_reg <= dm_dat_i;
 
-                        // Go To State Write
-                        if (dm_we_i) begin
-                            dm_state <= 2'b10;
-                            wb_stb_o <= 1'b1;
-                            wb_adr_o <= dm_adr_i;
-                            wb_dat_o <= dm_dat_i;
-                            wb_we_o <= 1'b1;
-                            case (dm_dat_width_i)
-                                // Follow the Code in File `lab5_master.sv`
-                                3'b001: begin
-                                    wb_sel_o <= (4'b0001 << (dm_adr_i & 2'b11));
-                                end
-                                default: begin
-                                    wb_sel_o <= 4'b1111;
-                                end
-                            endcase
+                        if (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004) begin
+                            wb_ack_reg <= 1'b1;
+                            dm_dat_o_reg <= mt_mtime_rdata;
                         end
-
-                        // Go To State Read
                         else begin
-                            dm_state <= 2'b01;
-                            wb_stb_o <= 1'b1;
-                            wb_adr_o <= dm_adr_i;
-                            wb_we_o <= 1'b0;
-                            wb_sel_o <= 4'b1111;
+                            wb_ack_reg <= 1'b0;
+
+                            // Go To State Write
+                            if (dm_we_i) begin
+                                dm_state <= 2'b10;
+                                wb_stb_o <= 1'b1;
+                                wb_adr_o <= dm_adr_i;
+                                wb_dat_o <= dm_dat_i;
+                                wb_we_o <= 1'b1;
+                                case (dm_dat_width_i)
+                                    // Follow the Code in File `lab5_master.sv`
+                                    3'b001: begin
+                                        wb_sel_o <= (4'b0001 << (dm_adr_i & 2'b11));
+                                    end
+                                    default: begin
+                                        wb_sel_o <= 4'b1111;
+                                    end
+                                endcase
+                            end
+
+                            // Go To State Read
+                            else begin
+                                dm_state <= 2'b01;
+                                wb_stb_o <= 1'b1;
+                                wb_adr_o <= dm_adr_i;
+                                wb_we_o <= 1'b0;
+                                wb_sel_o <= 4'b1111;
+                            end
                         end
                     end
                 end
