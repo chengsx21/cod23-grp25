@@ -12,6 +12,8 @@ module if_id_regs #(
     output logic [DATA_WIDTH-1:0] inst_o,
     input wire predict_i,
     output logic predict_o,
+    input wire clear_cache_i,
+    output logic clear_cache_o,
 
     // [EXE] ~ [MEM]
     input wire [DATA_WIDTH-1:0] pc_i,
@@ -23,16 +25,19 @@ module if_id_regs #(
             inst_o <= 0;
             pc_o <= 0;
             predict_o <= 0;
+            clear_cache_o <= 0;
         end else if (stall_i) begin
             // Do nothing   
         end else if (bubble_i) begin
             inst_o <= 0;
             pc_o <= 0;
             predict_o <= 1;
+            clear_cache_o <= 0;
         end else begin
             inst_o <= inst_i;
             pc_o <= pc_i;
             predict_o <= predict_i;
+            clear_cache_o <= clear_cache_i;
         end
     end
 endmodule

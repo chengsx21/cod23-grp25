@@ -29,6 +29,8 @@ module id_exe_regs #(
     output logic [3:0] alu_op_o,
     input wire predict_i,
     output logic predict_o,
+    input wire clear_cache_i,
+    output logic clear_cache_o,
 
 
     // [EXE] ~ [MEM]
@@ -66,6 +68,7 @@ module id_exe_regs #(
             // 0 For Nothing
             alu_op_o <= 0;
             predict_o <= 0;
+            clear_cache_o <= 0;
 
             pc_o <= 0;
             rs2_dat_o <= 0;
@@ -91,6 +94,7 @@ module id_exe_regs #(
             // 0 For Nothing
             alu_op_o <= 0;
             predict_o <= 0;
+            clear_cache_o <= 0;
 
             pc_o <= 0;
             rs2_dat_o <= 0;
@@ -112,6 +116,7 @@ module id_exe_regs #(
             alu_b_mux_sel_o <= alu_b_mux_sel_i;
             alu_op_o <= alu_op_i;
             predict_o <= predict_i;
+            clear_cache_o <= clear_cache_i;
 
             pc_o <= pc_i;
             rs2_dat_o <= rs2_dat_i;

@@ -131,6 +131,8 @@ module mem_dm_master #(
                         dm_state <= 2'b00;
                         wb_ack_reg <= 1'b1;
                         wb_stb_o <= 1'b0;
+                        dm_en_reg <= 1'b0;
+                        dm_we_reg <= 1'b0;
 
                         case (dm_dat_width_reg)
                             3'b001: begin
@@ -149,6 +151,8 @@ module mem_dm_master #(
                         dm_state <= 2'b00;
                         wb_ack_reg <= 1'b1;
                         wb_stb_o <= 1'b0;
+                        dm_en_reg <= 1'b0;
+                        dm_we_reg <= 1'b0;
                     end
                 end
             endcase

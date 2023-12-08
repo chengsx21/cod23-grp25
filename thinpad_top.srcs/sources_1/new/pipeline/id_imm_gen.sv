@@ -231,6 +231,7 @@ module id_imm_gen #(
             MINU: begin
                 imm_o = {DATA_WIDTH{1'b0}};
             end
+
         endcase
     end
 endmodule

@@ -483,6 +483,7 @@ module id_decoder #(
 
                 reg_we_o = 1'b1;
             end
+
         endcase
     end
 endmodule
