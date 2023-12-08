@@ -16,6 +16,7 @@ module jump_predict #(
     input wire br_taken_i,
     input wire br_en_i,
     input wire [2:0] br_op_i,
+    input wire clear_cache_i,
     
     output reg br_miss_o,
     output reg [ADDR_WIDTH-1:0] br_next_o
@@ -23,28 +24,9 @@ module jump_predict #(
 
     typedef enum logic [5:0] {
         DEFAULT = 6'b000000,
-        ADD = 6'b000001,
-        ADDI = 6'b000010,
-        AND = 6'b000011,
-        ANDI = 6'b000100,
-        AUIPC = 6'b000101,
         BEQ = 6'b000110,
         BNE = 6'b000111,
-        JAL = 6'b001000,
-        JALR = 6'b001001,
-        LB = 6'b001010,
-        LUI = 6'b001011,
-        LW = 6'b001100,
-        OR = 6'b001101,
-        ORI = 6'b001110,
-        SB = 6'b001111,
-        SLLI = 6'b010000,
-        SRLI = 6'b010001,
-        SW = 6'b010010,
-        XOR = 6'b010011,
-        PCNT = 6'b010100,
-        PACK = 6'b010101,
-        MINU = 6'b010110
+        JAL = 6'b001000
     } Opcode_t;
     Opcode_t op;
 
@@ -99,6 +81,9 @@ module jump_predict #(
                 history_table[i] <= 1'b0;
                 valid_table[i] <= 1'b0;
             end
+        end
+        else if (clear_cache_i) begin
+            valid_table <= 16'b0;
         end
         else begin
             if (br_en_i && br_op_i != 3'b100) begin

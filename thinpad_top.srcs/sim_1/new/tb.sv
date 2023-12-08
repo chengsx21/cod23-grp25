@@ -47,7 +47,7 @@ module tb;
 
 	// Windows ??Ҫע��·���ָ�����ת�壬���� "D:\\foo\\bar.bin"
     //	parameter BASE_RAM_INIT_FILE = "C:\\Users\\cyh\\Desktop\\rv-2023\\cod23-grp25\\thinpad_top.srcs\\sources_1\\new\\kernel-rv32-no16550.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
-	parameter BASE_RAM_INIT_FILE = "C:\\rv\\asmcode\\kernel_int.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
+	parameter BASE_RAM_INIT_FILE = "C:\\Users\\cyh\\Desktop\\rv-2023\\asmcode\\test1.bin"; // BaseRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter EXT_RAM_INIT_FILE = "/tmp/eram.bin";  // ExtRAM ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 	parameter FLASH_INIT_FILE = "/tmp/kernel.elf";  // Flash ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 
@@ -60,17 +60,18 @@ module tb;
 		reset_btn = 1;
 		#100;
 		reset_btn = 0;
+		#100000;
 
-		#4000000;
-		uart.pc_send_byte(8'h47);
-		#10000;
-		uart.pc_send_byte(8'hc0);
-		#10000;
-		uart.pc_send_byte(8'h10);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h80);
+		// #4000000;
+		// uart.pc_send_byte(8'h47);
+		// #10000;
+		// uart.pc_send_byte(8'hc0);
+		// #10000;
+		// uart.pc_send_byte(8'h10);
+		// #10000;
+		// uart.pc_send_byte(8'h00);
+		// #10000;
+		// uart.pc_send_byte(8'h80);
 	end
 
 	// �������û���??
