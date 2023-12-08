@@ -6,6 +6,7 @@ module if_im_master #(
     input wire rst_i,
     input wire [ADDR_WIDTH-1:0] pc_i,
     input wire pc_sel_i,
+    input wire pc_exception_i,
     input wire cache_en_i,
     output logic [DATA_WIDTH-1:0] inst_o,
     output logic im_ready_o,
@@ -24,8 +25,7 @@ module if_im_master #(
 
     typedef enum logic [3:0] {
         READ_1,
-        READ_1_MISS,
-        READ_2
+        READ_1_MISS
     } im_state_t;
 
     im_state_t im_cstate;
@@ -61,13 +61,13 @@ module if_im_master #(
                     im_nstate = READ_1;
                 end
                 else begin
-                    if (~wb_ack_i && ~pc_sel_i) begin
+                    if (~wb_ack_i && ~(pc_sel_i || pc_exception_i)) begin
                         im_nstate = READ_1;
                     end
-                    else if (~wb_ack_i && pc_sel_i) begin
+                    else if (~wb_ack_i && (pc_sel_i || pc_exception_i)) begin
                         im_nstate = READ_1_MISS;
                     end
-                    else if (wb_ack_i && ~pc_sel_i) begin
+                    else if (wb_ack_i && ~(pc_sel_i || pc_exception_i)) begin
                         im_nstate = READ_1;
                     end
                     else begin
@@ -81,19 +81,6 @@ module if_im_master #(
                 end
                 else begin
                     im_nstate = READ_1_MISS;
-                end
-            end
-            READ_2: begin
-                if (cache_en_i) begin
-                    im_nstate = READ_1;
-                end
-                else begin
-                    if (wb_ack_i) begin
-                        im_nstate = READ_1;
-                    end
-                    else begin
-                        im_nstate = READ_2;
-                    end
                 end
             end
             default: begin

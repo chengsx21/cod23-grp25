@@ -183,6 +183,7 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 		.pc_i(if_pc),
 		.pc_sel_i(pc_sel),
+		.pc_exception_i(csr_exception_en),
 		.cache_en_i(if_cache_en),
 		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
