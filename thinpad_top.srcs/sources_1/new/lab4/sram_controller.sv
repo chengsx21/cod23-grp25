@@ -133,4 +133,5 @@ module sram_controller #(
       endcase
     end
   end
+
 endmodule

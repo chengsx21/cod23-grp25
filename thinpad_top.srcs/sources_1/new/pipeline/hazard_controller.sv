@@ -12,6 +12,7 @@ module hazard_controller #(
     input wire [4:0] writeback_rd_i,
 
     input wire br_miss_i,
+    input wire cache_en_i,
     input wire exe_reg_we_i,
     input wire mem_reg_we_i,
     input wire writeback_reg_we_i,

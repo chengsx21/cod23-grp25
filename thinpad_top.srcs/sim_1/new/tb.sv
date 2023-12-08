@@ -52,6 +52,7 @@ module tb;
 	parameter FLASH_INIT_FILE = "/tmp/kernel.elf";  // Flash ��ʼ���ļ������޸�Ϊʵ�ʵľ���·??
 
 	initial begin
+		$timeformat(-9,3," ns");
 		// ����������Զ�������������У����磺
 		push_btn = 0;
 
