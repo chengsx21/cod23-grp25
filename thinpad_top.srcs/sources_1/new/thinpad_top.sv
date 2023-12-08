@@ -161,8 +161,23 @@ module thinpad_top #(
 		.privilege_mode_o(if_privilege_mode_nxt)
 	);
 
+	logic csr_exception_en;
+	logic [1:0] csr_exception_privilege_mode;
+
+	if_priv_mode_mux if_priv_mode_mux (
+		.exception_en_i(csr_exception_en),
+		.if_privilege_mode_i(if_privilege_mode),
+		.exception_privilege_mode_i(csr_exception_privilege_mode),
+		.privilege_mode_o(if_privilege_mode_nxt)
+	);
+
+	logic [DATA_WIDTH-1:0] if_mem_inst;
+	logic [DATA_WIDTH-1:0] if_cache_inst;
 	logic [DATA_WIDTH-1:0] if_inst;
 	logic im_ready;
+	logic if_cache_en;
+	logic if_cache_we;
+	logic if_clear_cache;
 
 	logic wb0_cyc_o;
 	logic wb0_stb_o;
@@ -178,8 +193,11 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 		.pc_i(if_pc),
 		.pc_sel_i(pc_sel),
-		.inst_o(if_inst),
+		.cache_en_i(if_cache_en),
+		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
+		.cache_we_o(if_cache_we),
+		.clear_cache_o(if_clear_cache),
 
 		.wb_cyc_o(wb0_cyc_o),
 		.wb_stb_o(wb0_stb_o),
@@ -198,6 +216,7 @@ module thinpad_top #(
 
 	logic if_predict;
 	logic id_predict;
+	logic id_clear_cache;
 
 	logic [ADDR_WIDTH-1:0] id_pc;
 	logic [DATA_WIDTH-1:0] id_inst;
@@ -215,6 +234,8 @@ module thinpad_top #(
 		.inst_o(id_inst),
 		.predict_i(if_predict),
 		.predict_o(id_predict),
+		.clear_cache_i(if_clear_cache),
+		.clear_cache_o(id_clear_cache),
 
 		// [EXE] ~ [MEM]
 		.pc_i(if_pc),
@@ -398,6 +419,7 @@ module thinpad_top #(
 	logic [1:0] exe_alu_b_mux_sel;
 	logic [3:0] exe_alu_op;
 	logic exe_predict;
+	logic exe_clear_cache;
 
 	logic exe_dm_en;
 	logic exe_dm_we;
@@ -445,6 +467,8 @@ module thinpad_top #(
 		.alu_op_o(exe_alu_op),
 		.predict_i(id_predict),
 		.predict_o(exe_predict),
+		.clear_cache_i(id_clear_cache),
+		.clear_cache_o(exe_clear_cache),
 
 		// [EXE] ~ [MEM]
 		.pc_i(id_pc),
@@ -732,6 +756,7 @@ module thinpad_top #(
 		.writeback_rd_i(writeback_rd),
 
 		.br_miss_i(exe_br_miss),
+		.cache_en_i(if_cache_en),
 		.exe_reg_we_i(exe_reg_we),
 		.mem_reg_we_i(mem_reg_we),
 		.writeback_reg_we_i(writeback_reg_we),
@@ -808,6 +833,33 @@ module thinpad_top #(
 
 		.br_miss_o(exe_br_miss),
 		.br_next_o(exe_jp_pc)
+	);
+
+	if_icache #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32)
+	) if_icache (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.if_pc_i(if_pc),
+
+		.if_r_inst_o(if_cache_inst),
+		.if_cache_en_o(if_cache_en),
+
+		.exe_clear_cache_i(exe_clear_cache),
+		.if_cache_we_i(if_cache_we),
+		.if_w_inst_i(if_mem_inst)
+	);
+
+	if_inst_mux #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32)
+	) if_inst_mux (
+    	.cache_inst_i(if_cache_inst),
+    	.mem_inst_i(if_mem_inst),
+        .cache_en_i(if_cache_en),
+        .inst_o(if_inst)
 	);
 
 	//* ================ ARBITER ================ *//

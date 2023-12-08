@@ -30,16 +30,16 @@ module forwarding_controller #(
             rs1_dat_o = {DATA_WIDTH{1'b0}};
             rs1_dat_sel_o = 1'b0;
         end
-        else if (writeback_reg_we_i && writeback_rd_i == id_rs1_i) begin
-            rs1_dat_o = writeback_data_i;
+        else if (exe_reg_we_i && exe_rd_i == id_rs1_i && exe_writeback_mux_sel_i != 2'b00) begin
+            rs1_dat_o = exe_data_i;
             rs1_dat_sel_o = 1'b1;
         end
         else if (mem_reg_we_i && mem_rd_i == id_rs1_i) begin
             rs1_dat_o = mem_data_i;
             rs1_dat_sel_o = 1'b1;
         end
-        else if (exe_reg_we_i && exe_rd_i == id_rs1_i && exe_writeback_mux_sel_i != 2'b00) begin
-            rs1_dat_o = exe_data_i;
+        else if (writeback_reg_we_i && writeback_rd_i == id_rs1_i) begin
+            rs1_dat_o = writeback_data_i;
             rs1_dat_sel_o = 1'b1;
         end
         else begin
@@ -54,16 +54,16 @@ module forwarding_controller #(
             rs2_dat_o = {DATA_WIDTH{1'b0}};
             rs2_dat_sel_o = 1'b0;
         end
-        else if (writeback_reg_we_i && writeback_rd_i == id_rs2_i) begin
-            rs2_dat_o = writeback_data_i;
+        else if (exe_reg_we_i && exe_rd_i == id_rs2_i && exe_writeback_mux_sel_i != 2'b00) begin
+            rs2_dat_o = exe_data_i;
             rs2_dat_sel_o = 1'b1;
         end
         else if (mem_reg_we_i && mem_rd_i == id_rs2_i) begin
             rs2_dat_o = mem_data_i;
             rs2_dat_sel_o = 1'b1;
         end
-        else if (exe_reg_we_i && exe_rd_i == id_rs2_i && exe_writeback_mux_sel_i != 2'b00) begin
-            rs2_dat_o = exe_data_i;
+        else if (writeback_reg_we_i && writeback_rd_i == id_rs2_i) begin
+            rs2_dat_o = writeback_data_i;
             rs2_dat_sel_o = 1'b1;
         end
         else begin
@@ -71,6 +71,5 @@ module forwarding_controller #(
             rs2_dat_sel_o = 1'b0;
         end
     end
-
 
 endmodule
