@@ -161,16 +161,6 @@ module thinpad_top #(
 		.privilege_mode_o(if_privilege_mode_nxt)
 	);
 
-	logic csr_exception_en;
-	logic [1:0] csr_exception_privilege_mode;
-
-	if_priv_mode_mux if_priv_mode_mux (
-		.exception_en_i(csr_exception_en),
-		.if_privilege_mode_i(if_privilege_mode),
-		.exception_privilege_mode_i(csr_exception_privilege_mode),
-		.privilege_mode_o(if_privilege_mode_nxt)
-	);
-
 	logic [DATA_WIDTH-1:0] if_mem_inst;
 	logic [DATA_WIDTH-1:0] if_cache_inst;
 	logic [DATA_WIDTH-1:0] if_inst;
