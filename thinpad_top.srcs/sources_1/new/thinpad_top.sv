@@ -183,11 +183,11 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 		.pc_i(if_pc),
 		.pc_sel_i(pc_sel),
+		.pc_exception_i(csr_exception_en),
 		.cache_en_i(if_cache_en),
 		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
 		.cache_we_o(if_cache_we),
-		.clear_cache_o(if_clear_cache),
 
 		.wb_cyc_o(wb0_cyc_o),
 		.wb_stb_o(wb0_stb_o),
@@ -820,6 +820,7 @@ module thinpad_top #(
 		.br_taken_i(exe_br_taken),
 		.br_en_i(exe_br_en),
 		.br_op_i(exe_br_op),
+		.clear_cache_i(exe_clear_cache),
 
 		.br_miss_o(exe_br_miss),
 		.br_next_o(exe_jp_pc)
@@ -849,7 +850,8 @@ module thinpad_top #(
     	.cache_inst_i(if_cache_inst),
     	.mem_inst_i(if_mem_inst),
         .cache_en_i(if_cache_en),
-        .inst_o(if_inst)
+        .inst_o(if_inst),
+		.clear_cache_o(if_clear_cache)
 	);
 
 	//* ================ ARBITER ================ *//
