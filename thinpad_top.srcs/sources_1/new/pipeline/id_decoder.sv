@@ -3,6 +3,7 @@ module id_decoder #(
     parameter ADDR_WIDTH = 32
 ) (
     input wire [DATA_WIDTH-1:0] inst_i,
+    input wire if_page_fault_en_i,
 
     // [ID] ~ [EXE]
     output logic [4:0] rs1_o,
@@ -206,28 +207,54 @@ module id_decoder #(
     end
 
     always_comb begin
-        br_op_o = 3'b000;
-        alu_a_mux_sel_o = 2'b10;
-        alu_b_mux_sel_o = 2'b10;
-        alu_op_o = 4'b0000;
+        if (if_page_fault_en_i) begin
+            br_op_o = 3'b000;
+            alu_a_mux_sel_o = 2'b10;
+            alu_b_mux_sel_o = 2'b10;
+            alu_op_o = 4'b0000;
 
-        dm_en_o = 1'b0;
-        dm_we_o = 1'b0;
-        dm_dat_width_o = 3'b100;
-        writeback_mux_sel_o = 2'b01;
+            dm_en_o = 1'b0;
+            dm_we_o = 1'b0;
+            dm_dat_width_o = 3'b100;
+            writeback_mux_sel_o = 2'b01;
 
-        reg_we_o = 1'b0;
+            reg_we_o = 1'b0;
 
-        csr_we_o = 1'b0;
-        csr_op_o = 2'b00;
+            csr_we_o = 1'b0;
+            csr_op_o = 2'b00;
 
-        mret_en_o = 1'b0;
-        ecall_ebreak_en_o = 1'b0;
-        exception_type_o = 1'b0;
-        exception_code_o = {DATA_WIDTH{1'b0}};
-        exception_privilege_mode_o = 2'b00;
+            mret_en_o = 1'b0;
+            ecall_ebreak_en_o = 1'b0;
+            exception_type_o = 1'b0;
+            exception_code_o = 32'hC;
+            exception_privilege_mode_o = 2'b11;
 
-        instruction_mode_o = 2'b00;
+            instruction_mode_o = 2'b11;
+        end
+        else begin
+            br_op_o = 3'b000;
+            alu_a_mux_sel_o = 2'b10;
+            alu_b_mux_sel_o = 2'b10;
+            alu_op_o = 4'b0000;
+
+            dm_en_o = 1'b0;
+            dm_we_o = 1'b0;
+            dm_dat_width_o = 3'b100;
+            writeback_mux_sel_o = 2'b01;
+
+            reg_we_o = 1'b0;
+
+            csr_we_o = 1'b0;
+            csr_op_o = 2'b00;
+
+            mret_en_o = 1'b0;
+            ecall_ebreak_en_o = 1'b0;
+            exception_type_o = 1'b0;
+            exception_code_o = {DATA_WIDTH{1'b0}};
+            exception_privilege_mode_o = 2'b00;
+
+            instruction_mode_o = 2'b00;
+        end
 
         case (op)
             ADD: begin

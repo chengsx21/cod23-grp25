@@ -7,19 +7,17 @@ module mmu #(
     input wire clk_i,
     input wire rst_i,
 
-
-    input wire [ADDR_WIDTH-1:0] vir_addr_i,
-
-    input wire [1:0] previlidge
-    input wire page_en_i;                   // from satp[31], pipline reg
+    input wire [1:0] previlidge_i,
+    input wire page_en_i,                // from satp[31], pipline reg
     input wire [PPN_WIDTH-1:0] ppn_i,       // from satp[21:0]
-    
+
+    input wire new_cycle_i,
+    input wire [ADDR_WIDTH-1:0] vir_addr_i,
     output logic [ADDR_WIDTH-1:0] phy_addr_o,
     output logic phy_ready_o,
+    output logic mmu_busy_o,
 
-    input wire new_cycle,
-
-    output logic page_fault_o,
+    output logic page_fault_en_o,
 
     // Wishbone Interface Signals
     output logic wb_cyc_o,
@@ -30,7 +28,6 @@ module mmu #(
     input wire [DATA_WIDTH-1:0] wb_dat_i,
     output logic [DATA_WIDTH/8-1:0] wb_sel_o,
     output logic wb_we_o
-
 );
 
     typedef enum logic [3:0] { 
@@ -90,7 +87,7 @@ module mmu #(
                 end
             end
             DONE: begin
-                if (new_cycle) begin
+                if (new_cycle_i) begin
                     mmu_nstate = PT_READ_1;
                 end
                 else begin
@@ -98,7 +95,7 @@ module mmu #(
                 end
             end
             PAGE_FAULT: begin
-                if (new_cycle) begin
+                if (new_cycle_i) begin
                     mmu_nstate = PT_READ_1;
                 end
                 else begin
@@ -110,16 +107,17 @@ module mmu #(
     end
 
     always_comb begin
-        wb_cyc_o = page_en_i & (~wb_ack_i) & (mmu_cstate == READ_1 | mmu_cstate == READ_2);
+        wb_cyc_o = page_en_i && previlidge_i == 2'b00 && (~wb_ack_i) && (mmu_cstate == READ_1 || mmu_cstate == READ_2);
         wb_stb_o = wb_cyc_o;
         wb_dat_o = {DATA_WIDTH{1'b0}};
         wb_sel_o = 4'b1111;
         wb_we_o = 1'b0;
         wb_adr_o = {DATA_WIDTH{1'b0}}; //default
 
-        page_fault_o = (mmu_cstate == PAGE_FAULT);
-        phy_ready_o = (mmu_cstate == DONE);
-        phy_addr_o = (mmu_cstate == DONE) ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}};
+        page_fault_en_o = mmu_cstate == PAGE_FAULT;
+        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT;
+        phy_addr_o = mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}};
+        mmu_busy_o = mmu_cstate == READ_1 || mmu_cstate == READ_2;
 
         case (mmu_cstate)
             // only for sv32 page

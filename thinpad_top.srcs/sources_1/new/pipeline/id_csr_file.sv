@@ -1,11 +1,13 @@
 module id_csr_file #(
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 32
+    parameter ADDR_WIDTH = 32,
+    parameter PPN_WIDTH = 22
 ) (
     input wire clk_i,
     input wire rst_i,
 
     input wire [ADDR_WIDTH-1:0] pc_i,
+    input wire [ADDR_WIDTH-1:0] mem_pc_i,
     input wire [1:0] privilege_mode_i,
 
     input wire [1:0] csr_op_i, // 0 For Write, 1 For Set, 2 For Clear
@@ -20,8 +22,13 @@ module id_csr_file #(
 
     input wire mret_en_i,
     input wire ecall_ebreak_en_i,
+    input wire if_page_fault_en_i,
+    input wire mem_page_fault_en_i,
     input wire exception_type_i,
     input wire [DATA_WIDTH-1:0] exception_code_i,
+
+    input wire if_mmu_ready_i,
+    input wire mem_mmu_ready_i,
 
     output logic interrupt_en_o,
     output logic [ADDR_WIDTH-1:0] interrupt_pc_o,
@@ -29,7 +36,10 @@ module id_csr_file #(
     output logic exception_en_o,
     output logic [ADDR_WIDTH-1:0] exception_pc_o,
     output logic [DATA_WIDTH-1:0] csr_rdata_o,
-    output logic [DATA_WIDTH-1:0] csr_wdata_o
+    output logic [DATA_WIDTH-1:0] csr_wdata_o,
+
+    output logic paging_en_o,
+    output logic [PPN_WIDTH-1:0] ppn_o
     );
 
     reg [ADDR_WIDTH-1:0] mtvec;
@@ -39,8 +49,11 @@ module id_csr_file #(
     reg [DATA_WIDTH-1:0] mstatus;
     reg [DATA_WIDTH-1:0] mie;
     reg [DATA_WIDTH-1:0] mip;
+    reg [DATA_WIDTH-1:0] satp;
 
-    assign exception_en_o = (ecall_ebreak_en_i | mret_en_i);
+    assign paging_en_o = satp[31];
+
+    assign exception_en_o = (ecall_ebreak_en_i | mret_en_i | if_page_fault_en_i);
 
     always_comb begin
         if (ecall_ebreak_en_i) begin
@@ -48,6 +61,12 @@ module id_csr_file #(
         end
         else if (mret_en_i) begin
             exception_pc_o = mepc;
+        end
+        else if (mem_page_fault_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else if (if_page_fault_en_i) begin
+            exception_pc_o = mtvec;
         end
         else begin
             exception_pc_o = {ADDR_WIDTH{1'b0}};
@@ -73,6 +92,7 @@ module id_csr_file #(
             12'h300: csr_rdata = mstatus;
             12'h304: csr_rdata = mie;
             12'h344: csr_rdata = mip;
+            12'h180: csr_rdata = satp;
             default: csr_rdata = {DATA_WIDTH{1'b0}};
         endcase
     end
@@ -97,6 +117,10 @@ module id_csr_file #(
             mcause <= {DATA_WIDTH{1'b0}};
             mstatus <= {DATA_WIDTH{1'b0}};
             mie <= {DATA_WIDTH{1'b0}};
+            satp <= {DATA_WIDTH{1'b0}};
+        end
+        else if (~if_mmu_ready_i || ~mem_mmu_ready_i) begin
+            // block csr wirte back
         end
         else if (timer_interrupt_i & privilege_mode_i != 2'b11) begin
             mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
@@ -111,6 +135,7 @@ module id_csr_file #(
                 12'h342: mcause <= csr_wdata_i;
                 12'h300: mstatus <= csr_wdata_i;
                 12'h304: mie <= csr_wdata_i;
+                12'h180: satp <= csr_wdata_i;
             endcase
         end
         else if (ecall_ebreak_en_i) begin
@@ -118,5 +143,15 @@ module id_csr_file #(
             mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
             mepc <= pc_i;
         end
-    end 
+        else if (mem_page_fault_en_i) begin
+            mstatus <= {mstatus[31:13], 2'b00, mstatus[10:0]};
+            mcause <= 32'hD;
+            mepc <= mem_pc_i;
+        end
+        else if (if_page_fault_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
+            mepc <= pc_i;
+        end
+    end
 endmodule

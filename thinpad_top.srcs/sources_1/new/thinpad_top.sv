@@ -2,7 +2,8 @@
 
 module thinpad_top #(
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 32
+    parameter ADDR_WIDTH = 32,
+	parameter PPN_WIDTH = 22
 ) (
     input wire clk_50M,     // 50MHz clock input
     input wire clk_11M0592, // 11.0592MHz clock input
@@ -169,14 +170,20 @@ module thinpad_top #(
 	logic if_cache_we;
 	logic if_clear_cache;
 
-	logic wb0_cyc_o;
-	logic wb0_stb_o;
-	logic wb0_ack_i;
-	logic [ADDR_WIDTH-1:0] wb0_adr_o;
-	logic [DATA_WIDTH-1:0] wb0_dat_o;
-	logic [DATA_WIDTH-1:0] wb0_dat_i;
-	logic [DATA_WIDTH/8-1:0] wb0_sel_o;
-	logic wb0_we_o;
+	logic paging_en;
+	logic if_mmu_ready;
+	logic [ADDR_WIDTH-1:0] if_phy_addr;
+	logic if_page_fault_en;
+	logic if_mmu_next_fetch;
+
+	logic wb0_master_cyc_o;
+	logic wb0_master_stb_o;
+	logic wb0_master_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_master_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_master_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_master_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_master_sel_o;
+	logic wb0_master_we_o;
 
 	if_im_master if_im_master (
 		.clk_i(sys_clk),
@@ -188,6 +195,92 @@ module thinpad_top #(
 		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
 		.cache_we_o(if_cache_we),
+
+		.previlidge_i(if_privilege_mode),
+		.paging_en_i(paging_en),
+		.mmu_ready_i(if_mmu_ready),
+		.phy_addr_i(if_phy_addr),
+		.page_fault_en_i(if_page_fault_en)
+		.mmu_next_fetch_o(if_mmu_next_fetch),
+
+		.wb_cyc_o(wb0_master_cyc_o),
+		.wb_stb_o(wb0_master_stb_o),
+		.wb_ack_i(wb0_master_ack_i),
+		.wb_adr_o(wb0_master_adr_o),
+		.wb_dat_o(wb0_master_dat_o),
+		.wb_dat_i(wb0_master_dat_i),
+		.wb_sel_o(wb0_master_sel_o),
+		.wb_we_o(wb0_master_we_o)
+	);
+
+	logic [PPN_WIDTH-1:0] ppn;
+
+	logic if_mmu_busy;
+
+	logic wb0_mmu_cyc_o;
+	logic wb0_mmu_stb_o;
+	logic wb0_mmu_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_mmu_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_mmu_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_mmu_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_mmu_sel_o;
+	logic wb0_mmu_we_o;
+
+	mmu if_mmu (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.previlidge_i(if_privilege_mode),
+		.page_en_i(paging_en),
+		.ppn_i(ppn),
+
+		.new_cycle_i(if_mmu_next_fetch),
+		.vir_addr_i(if_pc),
+		.phy_addr_o(if_phy_addr),
+		.phy_ready_o(if_mmu_ready),
+		.mmu_busy_o(if_mmu_busy),
+
+		.page_fault_en_o(if_page_fault_en),
+
+		.wb_cyc_o(wb0_mmu_cyc_o),
+		.wb_stb_o(wb0_mmu_stb_o),
+		.wb_ack_i(wb0_mmu_ack_i),
+		.wb_adr_o(wb0_mmu_adr_o),
+		.wb_dat_o(wb0_mmu_dat_o),
+		.wb_dat_i(wb0_mmu_dat_i),
+		.wb_sel_o(wb0_mmu_sel_o),
+		.wb_we_o(wb0_mmu_we_o)
+	);
+
+	logic wb0_cyc_o;
+	logic wb0_stb_o;
+	logic wb0_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_sel_o;
+	logic wb0_we_o;
+
+	mmu_master_mux if_mmu_master_mux (
+		.sel_i(if_mmu_busy),
+
+		.mmu_wb_cyc_i(wb0_mmu_cyc_o),
+		.mmu_wb_stb_i(wb0_mmu_stb_o),
+		.mmu_wb_ack_o(wb0_mmu_ack_i),
+		.mmu_wb_adr_i(wb0_mmu_adr_o),
+		.mmu_wb_dat_i(wb0_mmu_dat_o),
+		.mmu_wb_dat_o(wb0_mmu_dat_i),
+		.mmu_wb_sel_i(wb0_mmu_sel_o),
+		.mmu_wb_we_i(wb0_mmu_we_o),
+
+		.master_wb_cyc_i(wb0_master_cyc_o),
+		.master_wb_stb_i(wb0_master_stb_o),
+		.master_wb_ack_o(wb0_master_ack_i),
+		.master_wb_adr_i(wb0_master_adr_o),
+		.master_wb_dat_i(wb0_master_dat_o),
+		.master_wb_dat_o(wb0_master_dat_i),
+		.master_wb_sel_i(wb0_master_sel_o),
+		.master_wb_we_i(wb0_master_we_o),
 
 		.wb_cyc_o(wb0_cyc_o),
 		.wb_stb_o(wb0_stb_o),
@@ -212,6 +305,7 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_inst;
 
 	logic [1:0] id_privilege_mode;
+	logic id_page_fault_en;
 
 	if_id_regs if_id_regs (
 		.clk_i(sys_clk),
@@ -233,7 +327,9 @@ module thinpad_top #(
 
 		// [CSR]
 		.privilege_mode_i(if_privilege_mode),
-	    .privilege_mode_o(id_privilege_mode)
+	    .privilege_mode_o(id_privilege_mode),
+		.if_page_fault_en_i(if_page_fault_en),
+		.if_page_fault_en_o(id_page_fault_en)
     );
 
 	//* ================= ID ================= *//
@@ -267,6 +363,7 @@ module thinpad_top #(
 
  	id_decoder id_decoder (
 		.inst_i(id_inst),
+		.if_page_fault_en_i(id_page_fault_en),
 
 		// [ID] ~ [EXE]
 		.rs1_o(id_rs1),
@@ -354,6 +451,10 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_csr_rdata;
 	logic [DATA_WIDTH-1:0] id_csr_wdata;
 
+	logic mem_page_fault_en;
+
+	logic mem_mmu_ready;
+
 	logic id_exception_en;
 	logic [ADDR_WIDTH-1:0] id_exception_pc;
 	logic mtime_interrupt_en;
@@ -364,6 +465,7 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 
 		.pc_i(id_pc),
+		.mem_pc_i(mem_pc),
 		.privilege_mode_i(id_privilege_mode),
 
 		.csr_op_i(id_csr_op),
@@ -377,8 +479,13 @@ module thinpad_top #(
 
 		.mret_en_i(id_mret_en),
 		.ecall_ebreak_en_i(id_ecall_ebreak_en),
+		.if_page_fault_en_i(id_page_fault_en),
+		.mem_page_fault_en_i(mem_page_fault_en),
 		.exception_type_i(id_exception_type),
 		.exception_code_i(id_exception_code),
+
+		.if_mmu_ready_i(if_mmu_ready),
+		.mem_mmu_ready_i(mem_mmu_ready),
 
 		.interrupt_en_o(mtime_interrupt_en),
 		.interrupt_pc_o(mtime_interrupt_pc),
@@ -387,8 +494,11 @@ module thinpad_top #(
 		.exception_pc_o(id_exception_pc),
 
 		.csr_rdata_o(id_csr_rdata),
-		.csr_wdata_o(id_csr_wdata)
-		);
+		.csr_wdata_o(id_csr_wdata),
+
+		.paging_en_o(paging_en),
+		.ppn_o(ppn)
+	);
 
 	//* =============== ID-EXE =============== *//
 
@@ -656,6 +766,9 @@ module thinpad_top #(
 
 	logic [DATA_WIDTH-1:0] mem_reg_dat;
 
+	logic mem_page_fault_en;
+	logic mem_mmu_ready;
+
 	mem_writeback_mux mem_writeback_mux (
 		.dm_dat_i(mem_dm_dat),
 		.alu_y_i(mem_alu_y),
@@ -671,6 +784,9 @@ module thinpad_top #(
 
 		.interrupt_en_i(mtime_interrupt_en),
 		.interrupt_pc_i(mtime_interrupt_pc),
+
+		.mem_page_fault_en_i(mem_page_fault_en),
+		.mem_page_fault_pc_i(id_exception_pc),
 
 		.csr_exception_en_o(csr_exception_en),
 		.csr_exception_pc_o(csr_exception_pc),
@@ -767,6 +883,9 @@ module thinpad_top #(
 		.exception_en_i(csr_exception_en),
 		.interrupt_en_i(mtime_interrupt_en),
 
+		.if_mmu_ready_i(if_mmu_ready),
+		.mem_mmu_ready_i(mem_mmu_ready),
+
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),
 		.if_id_stall_o(if_id_stall),
@@ -833,7 +952,7 @@ module thinpad_top #(
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
 
-		.if_pc_i(if_pc),
+		.if_pc_i(wb0_adr_o),
 
 		.if_r_inst_o(if_cache_inst),
 		.if_cache_en_o(if_cache_en),

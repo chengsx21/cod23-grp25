@@ -33,6 +33,9 @@ module hazard_controller #(
     input wire exception_en_i,
     input wire interrupt_en_i,
 
+    input wire if_mmu_ready_i,
+    input wire mem_mmu_ready_i,
+
     output logic pc_sel_o,
     output logic pc_stall_o,
     output logic if_id_stall_o,
@@ -51,12 +54,13 @@ module hazard_controller #(
     
     typedef enum logic [2:0] {
         NONE = 3'b000,
-        IN = 3'b001,
-        DM = 3'b010,
-        BR = 3'b011,
-        RW = 3'b100,
-        EX = 3'b101,
-        IM = 3'b110
+        MM = 3'b001,
+        IN = 3'b010,
+        DM = 3'b011,
+        BR = 3'b100,
+        RW = 3'b101,
+        EX = 3'b110,
+        IM = 3'b111
     } hazard_t;
     hazard_t hazard_type;
 
@@ -78,6 +82,22 @@ module hazard_controller #(
         mem_wb_bubble_o = 0;
 
         hazard_type = NONE;
+
+        //* MMU not ready *//
+        if (~if_mmu_ready_i || ~mem_mmu_ready_i) begin
+            pc_stall_o = 1;
+            if_id_stall_o = 1;
+            id_exe_stall_o = 1;
+            exe_mem_stall_o = 1;
+            mem_wb_stall_o = 1;
+
+            if_id_bubble_o = 0;
+            id_exe_bubble_o = 0;
+            exe_mem_bubble_o = 0;
+            mem_wb_bubble_o = 0;
+
+            hazard_type = MM;
+        end
 
         //* Timer Interrupt *//
         //* Flush the whole pipeline *//
