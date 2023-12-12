@@ -22,7 +22,9 @@ module mmu #(
     output logic mmu_busy_o,
 
     output logic page_fault_en_o,
-    output logic [DATA_WIDTH-1:0] page_fault_exeption_code,
+    output logic inst_page_fault_o,
+    output logic store_page_fault_o,
+    output logic load_page_fault_o,
 
     // Wishbone Interface Signals
     output logic wb_cyc_o,
@@ -73,7 +75,9 @@ module mmu #(
             mmu_cstate <= PT_READ_1;
             pte_reg <= 32'hFFFF_FFFF;
             page_fault_en_o <= 0;
-            page_fault_exeption_code <= 31'b0;
+            inst_page_fault_o <= 0;
+            store_page_fault_o <= 0;
+            load_page_fault_o <= 0;
         end
         else begin
             mmu_cstate <= mmu_nstate;
@@ -82,18 +86,20 @@ module mmu #(
             end
             if (mmu_nstate == PT_READ_1) begin
                 page_fault_en_o <= 0;
-                page_fault_exeption_code <= 31'b0;
+                inst_page_fault_o <= 0;
+                store_page_fault_o <= 0;
+                load_page_fault_o <= 0;
             end
             else if (mmu_nstate == PAGE_FAULT) begin
                 page_fault_en_o <= 1;
                 if (instruction_page_fault) begin
-                    page_fault_exeption_code <= 32'h0000_000c;//12
+                    inst_page_fault_o <= 1'b1;
                 end                    
                 else if (load_page_fault) begin
-                    page_fault_exeption_code <= 32'h0000_000d;//13
+                    load_page_fault_o <= 1'b1;
                 end
                 else if (store_page_fault) begin
-                    page_fault_exeption_code <= 32'h0000_000f;//15
+                    store_page_fault_o <= 1'b1;
                 end
             end
         end
