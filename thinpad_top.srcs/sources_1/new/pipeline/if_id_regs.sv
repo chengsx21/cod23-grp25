@@ -23,7 +23,7 @@ module if_id_regs #(
     input wire [1:0] privilege_mode_i,
     output logic [1:0] privilege_mode_o,
     input wire if_page_fault_en_i,
-    input wire if_page_fault_en_o
+    output logic if_page_fault_en_o
     );
 
     always_ff @(posedge clk_i) begin

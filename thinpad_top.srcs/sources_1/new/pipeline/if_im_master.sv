@@ -13,7 +13,7 @@ module if_im_master #(
     output logic cache_we_o,
 
     // paging
-    input wire [1:0] previlidge_i,
+    input wire [1:0] privilidge_i,
     input wire paging_en_i,
     input wire mmu_ready_i,
     input wire [ADDR_WIDTH-1:0] phy_addr_i,
@@ -98,7 +98,7 @@ module if_im_master #(
     end
 
     always_comb begin
-        if (previlidge_i == 2'b11 || ~paging_en_i) begin
+        if (privilidge_i == 2'b11 || ~paging_en_i) begin
             wb_dat_o = {DATA_WIDTH{1'b0}};
             wb_sel_o = 4'b1111;
             wb_we_o = 1'b0;
@@ -108,7 +108,7 @@ module if_im_master #(
             inst_o = (wb_ack_i && im_cstate != READ_1_MISS) ? wb_dat_i : {DATA_WIDTH{1'b0}};
             im_ready_o = (cache_en_i && ~no_int_reg) || (~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS);
             cache_we_o = ~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS;
-            mmu_next_fetch_o = 1'b0;
+            mmu_next_fetch_o = 1'b1;
         end
         else if (page_fault_en_i) begin
             wb_dat_o = {DATA_WIDTH{1'b0}};

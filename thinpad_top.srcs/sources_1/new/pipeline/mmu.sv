@@ -7,7 +7,10 @@ module mmu #(
     input wire clk_i,
     input wire rst_i,
 
-    input wire [1:0] previlidge_i,
+    input wire type_i, // 0 for if, 1 for mem
+    input wire mem_en_i,
+
+    input wire [1:0] privilidge_i,
     input wire page_en_i,                // from satp[31], pipline reg
     input wire [PPN_WIDTH-1:0] ppn_i,       // from satp[21:0]
 
@@ -41,6 +44,8 @@ module mmu #(
     mmu_state_t mmu_nstate;
 
     logic [DATA_WIDTH-1:0] pte_reg;
+
+    logic clock_adr_comb;
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
@@ -102,12 +107,12 @@ module mmu #(
                     mmu_nstate = PAGE_FAULT;
                 end                
             end
-            default: 
         endcase
     end
 
     always_comb begin
-        wb_cyc_o = page_en_i && previlidge_i == 2'b00 && (~wb_ack_i) && (mmu_cstate == READ_1 || mmu_cstate == READ_2);
+        clock_adr_comb = vir_addr_i == 32'h0200bff8 || vir_addr_i == 32'h0200bffc || vir_addr_i == 32'h02004000 || vir_addr_i == 32'h02004004;
+        wb_cyc_o = page_en_i && privilidge_i == 2'b00 && ((~type_i) || (~clock_adr_comb && mem_en_i)) && (~wb_ack_i) && (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2);
         wb_stb_o = wb_cyc_o;
         wb_dat_o = {DATA_WIDTH{1'b0}};
         wb_sel_o = 4'b1111;
@@ -115,9 +120,9 @@ module mmu #(
         wb_adr_o = {DATA_WIDTH{1'b0}}; //default
 
         page_fault_en_o = mmu_cstate == PAGE_FAULT;
-        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT;
+        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT || (type_i && (clock_adr_comb || (~mem_en_i))) || privilidge_i == 2'b11 || ~page_en_i;
         phy_addr_o = mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}};
-        mmu_busy_o = mmu_cstate == READ_1 || mmu_cstate == READ_2;
+        mmu_busy_o = (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i;
 
         case (mmu_cstate)
             // only for sv32 page

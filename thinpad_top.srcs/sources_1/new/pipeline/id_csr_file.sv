@@ -52,6 +52,7 @@ module id_csr_file #(
     reg [DATA_WIDTH-1:0] satp;
 
     assign paging_en_o = satp[31];
+    assign ppn_o = satp[21:0];
 
     assign exception_en_o = (ecall_ebreak_en_i | mret_en_i | if_page_fault_en_i);
 

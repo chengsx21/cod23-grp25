@@ -196,11 +196,11 @@ module thinpad_top #(
 		.im_ready_o(im_ready),
 		.cache_we_o(if_cache_we),
 
-		.previlidge_i(if_privilege_mode),
+		.privilidge_i(if_privilege_mode),
 		.paging_en_i(paging_en),
 		.mmu_ready_i(if_mmu_ready),
 		.phy_addr_i(if_phy_addr),
-		.page_fault_en_i(if_page_fault_en)
+		.page_fault_en_i(if_page_fault_en),
 		.mmu_next_fetch_o(if_mmu_next_fetch),
 
 		.wb_cyc_o(wb0_master_cyc_o),
@@ -230,7 +230,10 @@ module thinpad_top #(
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
 
-		.previlidge_i(if_privilege_mode),
+		.type_i(1'b0),
+		.mem_en_i(1'b0),
+
+		.privilidge_i(if_privilege_mode),
 		.page_en_i(paging_en),
 		.ppn_i(ppn),
 
@@ -727,14 +730,17 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] mem_dm_dat;
 	logic dm_ready;
 
-	logic wb1_cyc_o;
-	logic wb1_stb_o;
-	logic wb1_ack_i;
-	logic [ADDR_WIDTH-1:0] wb1_adr_o;
-	logic [DATA_WIDTH-1:0] wb1_dat_o;
-	logic [DATA_WIDTH-1:0] wb1_dat_i;
-	logic [DATA_WIDTH/8-1:0] wb1_sel_o;
-	logic wb1_we_o;
+	logic [ADDR_WIDTH-1:0] mem_phy_addr;
+	logic mem_mmu_next_fetch;
+
+	logic wb1_master_cyc_o;
+	logic wb1_master_stb_o;
+	logic wb1_master_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_master_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_master_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_master_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_master_sel_o;
+	logic wb1_master_we_o;
 
 	mem_dm_master mem_dm_master (
 		.clk_i(sys_clk),
@@ -754,6 +760,93 @@ module thinpad_top #(
 		.mt_high_we_o(mt_high_we),
 		.mt_mtime_wdata_o(mt_mtime_wdata),
 
+		.privilidge_i(mem_privilege_mode),
+		.page_en_i(paging_en),
+		.mmu_ready_i(mem_mmu_ready),
+		.phy_addr_i(mem_phy_addr),
+		.page_fault_en_i(mem_page_fault_en),
+		.mmu_next_fetch_o(mem_mmu_next_fetch),
+
+		.wb_cyc_o(wb1_master_cyc_o),
+		.wb_stb_o(wb1_master_stb_o),
+		.wb_ack_i(wb1_master_ack_i),
+		.wb_adr_o(wb1_master_adr_o),
+		.wb_dat_o(wb1_master_dat_o),
+		.wb_dat_i(wb1_master_dat_i),
+		.wb_sel_o(wb1_master_sel_o),
+		.wb_we_o(wb1_master_we_o)
+    );
+
+	logic mem_mmu_busy;
+
+	logic wb1_mmu_cyc_o;
+	logic wb1_mmu_stb_o;
+	logic wb1_mmu_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_mmu_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_mmu_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_mmu_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_mmu_sel_o;
+	logic wb1_mmu_we_o;
+
+	mmu mem_mmu (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.type_i(1'b1),
+		.mem_en_i(mem_dm_en),
+
+		.privilidge_i(mem_privilege_mode),
+		.page_en_i(paging_en),
+		.ppn_i(ppn),
+
+		.new_cycle_i(mem_mmu_next_fetch),
+		.vir_addr_i(mem_alu_y),
+		.phy_addr_o(mem_phy_addr),
+		.phy_ready_o(mem_mmu_ready),
+		.mmu_busy_o(mem_mmu_busy),
+
+		.page_fault_en_o(mem_page_fault_en),
+
+		.wb_cyc_o(wb1_mmu_cyc_o),
+		.wb_stb_o(wb1_mmu_stb_o),
+		.wb_ack_i(wb1_mmu_ack_i),
+		.wb_adr_o(wb1_mmu_adr_o),
+		.wb_dat_o(wb1_mmu_dat_o),
+		.wb_dat_i(wb1_mmu_dat_i),
+		.wb_sel_o(wb1_mmu_sel_o),
+		.wb_we_o(wb1_mmu_we_o)
+	);
+
+	logic wb1_cyc_o;
+	logic wb1_stb_o;
+	logic wb1_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_sel_o;
+	logic wb1_we_o;
+
+	mmu_master_mux mem_mmu_master_mux (
+		.sel_i(mem_mmu_busy),
+
+		.mmu_wb_cyc_i(wb1_mmu_cyc_o),
+		.mmu_wb_stb_i(wb1_mmu_stb_o),
+		.mmu_wb_ack_o(wb1_mmu_ack_i),
+		.mmu_wb_adr_i(wb1_mmu_adr_o),
+		.mmu_wb_dat_i(wb1_mmu_dat_o),
+		.mmu_wb_dat_o(wb1_mmu_dat_i),
+		.mmu_wb_sel_i(wb1_mmu_sel_o),
+		.mmu_wb_we_i(wb1_mmu_we_o),
+
+		.master_wb_cyc_i(wb1_master_cyc_o),
+		.master_wb_stb_i(wb1_master_stb_o),
+		.master_wb_ack_o(wb1_master_ack_i),
+		.master_wb_adr_i(wb1_master_adr_o),
+		.master_wb_dat_i(wb1_master_dat_o),
+		.master_wb_dat_o(wb1_master_dat_i),
+		.master_wb_sel_i(wb1_master_sel_o),
+		.master_wb_we_i(wb1_master_we_o),
+
 		.wb_cyc_o(wb1_cyc_o),
 		.wb_stb_o(wb1_stb_o),
 		.wb_ack_i(wb1_ack_i),
@@ -762,12 +855,9 @@ module thinpad_top #(
 		.wb_dat_i(wb1_dat_i),
 		.wb_sel_o(wb1_sel_o),
 		.wb_we_o(wb1_we_o)
-    );
+	);
 
 	logic [DATA_WIDTH-1:0] mem_reg_dat;
-
-	logic mem_page_fault_en;
-	logic mem_mmu_ready;
 
 	mem_writeback_mux mem_writeback_mux (
 		.dm_dat_i(mem_dm_dat),

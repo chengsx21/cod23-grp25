@@ -17,15 +17,17 @@ module mem_exception_detector #(
     output logic [1:0] csr_exception_privilege_mode_o   // Privilege Mode for next IF Instruction if Exception/Interrupt
 );
 
-    if (mem_page_fault_en_i) begin
-        assign csr_exception_en_o = 1'b1;
-        assign csr_exception_pc_o = mem_page_fault_pc_i;
-        assign csr_exception_privilege_mode_o = 2'b11;
-    end
-    else begin
-        assign csr_exception_en_o = exception_en_i | interrupt_en_i;
-        assign csr_exception_pc_o = (interrupt_en_i? interrupt_pc_i: exception_pc_i);
-        assign csr_exception_privilege_mode_o = (interrupt_en_i? 2'b11: exception_privilege_mode_i);
+    always_comb begin
+        if (mem_page_fault_en_i) begin
+            csr_exception_en_o = 1'b1;
+            csr_exception_pc_o = mem_page_fault_pc_i;
+            csr_exception_privilege_mode_o = 2'b11;
+        end
+        else begin
+            csr_exception_en_o = exception_en_i | interrupt_en_i;
+            csr_exception_pc_o = (interrupt_en_i? interrupt_pc_i: exception_pc_i);
+            csr_exception_privilege_mode_o = (interrupt_en_i? 2'b11: exception_privilege_mode_i);
+        end
     end
 
 endmodule

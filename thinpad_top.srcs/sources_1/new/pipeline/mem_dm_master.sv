@@ -20,6 +20,14 @@ module mem_dm_master #(
     output logic mt_high_we_o,
     output logic [DATA_WIDTH-1:0] mt_mtime_wdata_o,
 
+    // paging
+    input wire [1:0] privilidge_i,
+    input wire page_en_i,
+    input wire mmu_ready_i,
+    input wire [ADDR_WIDTH-1:0] phy_addr_i,
+    input wire page_fault_en_i,
+    output logic mmu_next_fetch_o,
+
     // Wishbone Interface Signals
     output logic wb_cyc_o,
     output logic wb_stb_o,
@@ -45,16 +53,45 @@ module mem_dm_master #(
     logic [DATA_WIDTH-1:0] wb_dat_s;
 
     always_comb begin
-        is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
-        clock_ack = dm_en_i && is_clock_adr;
-        wb_dat_s = (wb_dat_i >> ((dm_adr_i & 2'b11) << 2'b11));
-        wb_stb_o = dm_en_i && (~wb_ack_i) && (~clock_ack);
-        wb_cyc_o = wb_stb_o;
-        wb_adr_o = dm_adr_i;
-        wb_dat_o = dm_dat_i;
-        wb_we_o = dm_we_i;
-        wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (dm_adr_i & 2'b11)) : 4'b1111;
-        dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
+        if (privilidge_i == 2'b11 || ~page_en_i) begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((dm_adr_i & 2'b11) << 2'b11));
+            wb_stb_o = dm_en_i && (~wb_ack_i) && (~clock_ack);
+            wb_cyc_o = wb_stb_o;
+            wb_adr_o = dm_adr_i;
+            wb_dat_o = dm_dat_i;
+            wb_we_o = dm_we_i;
+            wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (dm_adr_i & 2'b11)) : 4'b1111;
+            dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            mmu_next_fetch_o = 1'b1;
+        end
+        else if (page_fault_en_i) begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((dm_adr_i & 2'b11) << 2'b11));
+            wb_stb_o = 1'b0;
+            wb_cyc_o = 1'b0;
+            wb_adr_o = {ADDR_WIDTH{1'b0}};
+            wb_dat_o = {DATA_WIDTH{1'b0}};
+            wb_we_o = 1'b0;
+            wb_sel_o = 4'b1111;
+            dm_ready_o = 1'b1;
+            mmu_next_fetch_o = 1'b1;
+        end
+        else begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((phy_addr_i & 2'b11) << 2'b11));
+            wb_stb_o = dm_en_i && (~wb_ack_i) && (~clock_ack) && mmu_ready_i;
+            wb_cyc_o = wb_stb_o;
+            wb_adr_o = phy_addr_i;
+            wb_dat_o = dm_dat_i;
+            wb_we_o = dm_we_i;
+            wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (phy_addr_i & 2'b11)) : 4'b1111;
+            dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            mmu_next_fetch_o = (~dm_en_i) || wb_ack_i || clock_ack;
+        end
 
         // Receive Ack from Slave
         if (wb_ack_i) begin
@@ -129,7 +166,7 @@ module mem_dm_master #(
         else begin
             case (dm_state)
                 IDLE: begin
-                    if (dm_en_i && (~is_clock_adr)) begin
+                    if (dm_en_i && (~is_clock_adr) && (mmu_ready_i || privilidge_i == 2'b11 || ~page_en_i)) begin
                         if (dm_we_i) begin
                             dm_state <= WRITE;
                         end
