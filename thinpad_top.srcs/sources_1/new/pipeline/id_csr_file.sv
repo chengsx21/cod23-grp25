@@ -23,7 +23,8 @@ module id_csr_file #(
     input wire mret_en_i,
     input wire ecall_ebreak_en_i,
     input wire if_page_fault_en_i,
-    input wire mem_page_fault_en_i,
+    input wire mem_load_fault_en_i,
+    input wire mem_store_fault_en_i,
     input wire exception_type_i,
     input wire [DATA_WIDTH-1:0] exception_code_i,
 
@@ -63,7 +64,10 @@ module id_csr_file #(
         else if (mret_en_i) begin
             exception_pc_o = mepc;
         end
-        else if (mem_page_fault_en_i) begin
+        else if (mem_load_fault_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else if (mem_store_fault_en_i) begin
             exception_pc_o = mtvec;
         end
         else if (if_page_fault_en_i) begin
@@ -144,9 +148,14 @@ module id_csr_file #(
             mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
             mepc <= pc_i;
         end
-        else if (mem_page_fault_en_i) begin
+        else if (mem_load_fault_en_i) begin
             mstatus <= {mstatus[31:13], 2'b00, mstatus[10:0]};
             mcause <= 32'hD;
+            mepc <= mem_pc_i;
+        end
+        else if (mem_store_fault_en_i) begin
+            mstatus <= {mstatus[31:13], 2'b00, mstatus[10:0]};
+            mcause <= 32'hF;
             mepc <= mem_pc_i;
         end
         else if (if_page_fault_en_i) begin

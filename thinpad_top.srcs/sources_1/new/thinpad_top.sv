@@ -232,6 +232,7 @@ module thinpad_top #(
 
 		.type_i(1'b0),
 		.mem_en_i(1'b0),
+		.mem_type_i(1'b0),
 
 		.privilidge_i(if_privilege_mode),
 		.page_en_i(paging_en),
@@ -244,6 +245,9 @@ module thinpad_top #(
 		.mmu_busy_o(if_mmu_busy),
 
 		.page_fault_en_o(if_page_fault_en),
+		.inst_page_fault_o(),
+		.store_page_fault_o(),
+		.load_page_fault_o(),
 
 		.wb_cyc_o(wb0_mmu_cyc_o),
 		.wb_stb_o(wb0_mmu_stb_o),
@@ -455,6 +459,8 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_csr_wdata;
 
 	logic mem_page_fault_en;
+	logic mem_load_fault_en;
+	logic mem_store_fault_en;
 
 	logic mem_mmu_ready;
 
@@ -483,7 +489,8 @@ module thinpad_top #(
 		.mret_en_i(id_mret_en),
 		.ecall_ebreak_en_i(id_ecall_ebreak_en),
 		.if_page_fault_en_i(id_page_fault_en),
-		.mem_page_fault_en_i(mem_page_fault_en),
+		.mem_load_fault_en_i(mem_load_fault_en),
+		.mem_store_fault_en_i(mem_store_fault_en),
 		.exception_type_i(id_exception_type),
 		.exception_code_i(id_exception_code),
 
@@ -793,6 +800,7 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 
 		.type_i(1'b1),
+		.mem_type_i(mem_dm_we),
 		.mem_en_i(mem_dm_en),
 
 		.privilidge_i(mem_privilege_mode),
@@ -806,6 +814,9 @@ module thinpad_top #(
 		.mmu_busy_o(mem_mmu_busy),
 
 		.page_fault_en_o(mem_page_fault_en),
+		.inst_page_fault_o(),
+		.store_page_fault_o(mem_store_fault_en),
+		.load_page_fault_o(mem_load_fault_en),
 
 		.wb_cyc_o(wb1_mmu_cyc_o),
 		.wb_stb_o(wb1_mmu_stb_o),
@@ -875,8 +886,10 @@ module thinpad_top #(
 		.interrupt_en_i(mtime_interrupt_en),
 		.interrupt_pc_i(mtime_interrupt_pc),
 
-		.mem_page_fault_en_i(mem_page_fault_en),
-		.mem_page_fault_pc_i(id_exception_pc),
+		.mem_load_fault_en_i(mem_load_fault_en),
+		.mem_load_fault_pc_i(id_exception_pc),
+		.mem_store_fault_en_i(mem_store_fault_en),
+		.mem_store_fault_pc_i(id_exception_pc),
 
 		.csr_exception_en_o(csr_exception_en),
 		.csr_exception_pc_o(csr_exception_pc),

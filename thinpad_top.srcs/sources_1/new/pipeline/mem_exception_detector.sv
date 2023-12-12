@@ -8,9 +8,11 @@ module mem_exception_detector #(
 
     input wire interrupt_en_i,
     input wire [ADDR_WIDTH-1:0] interrupt_pc_i,         // PC for next IF Instruction if Interrupt
-    
-    input wire mem_page_fault_en_i, // page fault in mem stage
-    input wire [ADDR_WIDTH-1:0] mem_page_fault_pc_i, // exception pc for mem page fault 
+
+    input wire mem_load_fault_en_i,
+    input wire [ADDR_WIDTH-1:0] mem_load_fault_pc_i,
+    input wire mem_store_fault_en_i,
+    input wire [ADDR_WIDTH-1:0] mem_store_fault_pc_i,
 
     output logic csr_exception_en_o,                    // Exception/Interrupt Enable
     output logic [ADDR_WIDTH-1:0] csr_exception_pc_o,   // PC for next IF Instruction if Exception/Interrupt
@@ -18,9 +20,14 @@ module mem_exception_detector #(
 );
 
     always_comb begin
-        if (mem_page_fault_en_i) begin
+        if (mem_load_fault_en_i) begin
             csr_exception_en_o = 1'b1;
-            csr_exception_pc_o = mem_page_fault_pc_i;
+            csr_exception_pc_o = mem_load_fault_pc_i;
+            csr_exception_privilege_mode_o = 2'b11;
+        end
+        else if (mem_store_fault_en_i) begin
+            csr_exception_en_o = 1'b1;
+            csr_exception_pc_o = mem_store_fault_pc_i;
             csr_exception_privilege_mode_o = 2'b11;
         end
         else begin

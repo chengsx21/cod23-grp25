@@ -8,7 +8,7 @@ module mmu #(
     input wire rst_i,
 
     input wire type_i, // 0 for if, 1 for mem
-    input wire mem_type,  // 0 for store, 1 for load
+    input wire mem_type_i,  // 0 for store, 1 for load
     input wire mem_en_i,
 
     input wire [1:0] privilidge_i,
@@ -63,9 +63,9 @@ module mmu #(
         invalid_page = (~wb_dat_i[0]) || ((~wb_dat_i[1]) && (wb_dat_i[2]));
         invalid_privilege_mode = ((~wb_dat_i[4]) && (mmu_cstate == PT_READ_2));
         
-        instruction_page_fault = wb_ack_i && (type_i == 0) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[3]) && (mmu_cstate == PT_READ_2)));
-        store_page_fault = wb_ack_i && (type_i == 1) && (mem_type == 0) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[2]) && (mmu_cstate == PT_READ_2)));
-        load_page_fault = wb_ack_i && (type_i == 1) && (mem_type == 1) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[1]) && (mmu_cstate == PT_READ_2)));
+        instruction_page_fault = wb_ack_i && (type_i == 1'b0) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[3]) && (mmu_cstate == PT_READ_2)));
+        store_page_fault = wb_ack_i && (type_i == 1'b1) && (mem_type_i == 1'b1) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[2]) && (mmu_cstate == PT_READ_2)));
+        load_page_fault = wb_ack_i && (type_i == 1'b1) && (mem_type_i == 1'b0) && (invalid_page || invalid_privilege_mode || ((~wb_dat_i[1]) && (mmu_cstate == PT_READ_2)));
 
         is_page_fault = instruction_page_fault || store_page_fault || load_page_fault;
     end
