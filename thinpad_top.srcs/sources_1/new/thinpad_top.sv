@@ -97,6 +97,31 @@ module thinpad_top #(
 		.locked(locked)  // PLL lock signal, 1 when stable
 	);
 
+	logic [16:0] bram_addr_a;
+    logic [31:0] bram_data_in_a;
+	logic [31:0] bram_data_out_a;
+	logic bram_en_a;
+    logic [3:0] bram_we_a;
+
+	logic vga_bram_en;
+    logic [16:0] vga_bram_addr;
+    logic [31:0] vga_bram_data;
+
+	block_mem block_mem_1 (
+		.clka(sys_clk),
+		.ena(bram_en_a),
+		.wea(bram_we_a),
+		.addra(bram_addr_a),
+		.dina(bram_data_in_a),
+		.douta(bram_data_out_a),
+
+		.clkb(sys_clk),
+		.enb(vga_bram_en),
+		.web(4'b0000),
+		.addrb(vga_bram_addr),
+		.dinb(32'b0),
+		.doutb(vga_bram_data)
+	);
 	logic reset_of_clk50M;
 	// Async reset, sync free, transform locked to reset_of_clk50M
 	always_ff @(posedge clk50M or negedge locked) begin
@@ -935,7 +960,16 @@ module thinpad_top #(
     logic [3:0] wbs2_sel_o;
     logic wbs2_we_o;
 
-    wb_mux_3 wb_mux_3 (
+	logic wbs3_cyc_o;
+    logic wbs3_stb_o;
+    logic wbs3_ack_i;
+    logic [ADDR_WIDTH-1:0] wbs3_adr_o;
+    logic [DATA_WIDTH-1:0] wbs3_dat_o;
+    logic [DATA_WIDTH-1:0] wbs3_dat_i;
+    logic [3:0] wbs3_sel_o;
+    logic wbs3_we_o;
+
+    wb_mux_4 wb_mux_4 (
         .clk(sys_clk),
         .rst(sys_rst),
 
@@ -996,7 +1030,23 @@ module thinpad_top #(
         .wbs2_ack_i(wbs2_ack_i),
         .wbs2_err_i('0),
         .wbs2_rty_i('0),
-        .wbs2_cyc_o(wbs2_cyc_o)
+        .wbs2_cyc_o(wbs2_cyc_o),
+
+		// Slave interface 3 (to Blockram controller)
+        // Address range: 0x4000_0000 ~ 0x400F_FFFF
+        .wbs3_addr    (32'h4000_0000),
+        .wbs3_addr_msk(32'hFFF0_0000),
+
+        .wbs3_adr_o(wbs3_adr_o),
+        .wbs3_dat_i(wbs3_dat_i),
+        .wbs3_dat_o(wbs3_dat_o),
+        .wbs3_we_o (wbs3_we_o),
+        .wbs3_sel_o(wbs3_sel_o),
+        .wbs3_stb_o(wbs3_stb_o),
+        .wbs3_ack_i(wbs3_ack_i),
+        .wbs3_err_i('0),
+        .wbs3_rty_i('0),
+        .wbs3_cyc_o(wbs3_cyc_o)
     );
 
 	//* =============== WB_SLAVE =============== *//
@@ -1072,6 +1122,50 @@ module thinpad_top #(
         // to UART pins
         .uart_txd_o(txd),
         .uart_rxd_i(rxd)
+    );
+
+	bram_controller #(
+        .BRAM_ADDR_WIDTH(17),
+        .BRAM_DATA_WIDTH(32)
+    ) bram_controller (
+        .clk_i(sys_clk),
+        .rst_i(sys_rst),
+
+        // Wishbone slave (to MUX)
+        .wb_cyc_i(wbs3_cyc_o),
+        .wb_stb_i(wbs3_stb_o),
+        .wb_ack_o(wbs3_ack_i),
+        .wb_adr_i(wbs3_adr_o),
+        .wb_dat_i(wbs3_dat_o),
+        .wb_dat_o(wbs3_dat_i),
+        .wb_sel_i(wbs3_sel_o),
+        .wb_we_i (wbs3_we_o),
+
+        // To BRAM chip
+        .bram_addr(bram_addr_a),
+        .bram_data_in(bram_data_in_a),
+		.bram_data_out(bram_data_out_a),
+        .bram_en(bram_en_a),
+        .bram_we(bram_we_a)
+    );
+
+
+	vga #(20, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
+    	.clk        (sys_clk),
+    	.hdata      (),        // 横坐标
+    	.vdata      (),             // 纵坐标
+
+
+		.vga_bram_en(vga_bram_en),
+		.vga_bram_addr(vga_bram_addr),
+		.vga_bram_data(vga_bram_data),
+
+	    .hsync_reg      (video_hsync),
+    	.vsync_reg      (video_vsync),
+      	.vga_data_enable(video_de),
+		.video_red		(video_red),
+		.video_green	(video_green),
+		.video_blue     (video_blue)
     );
 
 endmodule
