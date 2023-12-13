@@ -101,7 +101,7 @@ module hazard_controller #(
 
         //* Timer Interrupt *//
         //* Flush the whole pipeline *//
-        if (interrupt_en_i) begin
+        else if (interrupt_en_i) begin
             pc_stall_o = 0;
             if_id_stall_o = 0;
             id_exe_stall_o = 0;

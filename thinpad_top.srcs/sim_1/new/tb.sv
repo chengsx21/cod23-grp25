@@ -61,131 +61,18 @@ module tb;
 		#100;
 		reset_btn = 0;
 
-		#4000000;
+		#400000;
 
-		// addi t2, x0, 0x2
-		#10000;
-		uart.pc_send_byte(8'h41);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h10);
-		#10000;
-		uart.pc_send_byte(8'h80);
-		#10000;
-		uart.pc_send_byte(8'h04);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h93);
-		#10000;
-		uart.pc_send_byte(8'h03);
-		#10000;
-		uart.pc_send_byte(8'h20);
-		#10000;
-		uart.pc_send_byte(8'h00);
-
-		// li t3, 0x7FC10000
-		#10000;
-		uart.pc_send_byte(8'h41);
-		#10000;
-		uart.pc_send_byte(8'h04);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h10);
-		#10000;
-		uart.pc_send_byte(8'h80);
-		#10000;
-		uart.pc_send_byte(8'h04);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h37);
-		#10000;
-		uart.pc_send_byte(8'h0e);
-		#10000;
-		uart.pc_send_byte(8'hc1);
-		#10000;
-		uart.pc_send_byte(8'h7f);
-
-		// sw t2, 8(t3)
-		#10000;
-		uart.pc_send_byte(8'h41);
-		#10000;
-		uart.pc_send_byte(8'h08);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h10);
-		#10000;
-		uart.pc_send_byte(8'h80);
-		#10000;
-		uart.pc_send_byte(8'h04);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h23);
-		#10000;
-		uart.pc_send_byte(8'h24);
-		#10000;
-		uart.pc_send_byte(8'h7e);
-		#10000;
-		uart.pc_send_byte(8'h00);
-
-		// ret
-		#10000;
-		uart.pc_send_byte(8'h41);
-		#10000;
-		uart.pc_send_byte(8'h0c);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h10);
-		#10000;
-		uart.pc_send_byte(8'h80);
-		#10000;
-		uart.pc_send_byte(8'h04);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h67);
-		#10000;
-		uart.pc_send_byte(8'h80);
-		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
-
-		// G
 		#10000;
 		uart.pc_send_byte(8'h47);
 		#10000;
-		uart.pc_send_byte(8'h00);
+		uart.pc_send_byte(8'h70);
+		#10000;
+		uart.pc_send_byte(8'h11);
 		#10000;
 		uart.pc_send_byte(8'h00);
 		#10000;
-		uart.pc_send_byte(8'h00);
-		#10000;
-		uart.pc_send_byte(8'h00);
+		uart.pc_send_byte(8'h80);
 	end
 
 	// �������û���??

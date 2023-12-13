@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="10951333fs"></ZoomStartTime>
-      <ZoomEndTime time="11117734fs"></ZoomEndTime>
-      <Cursor1Time time="11090000fs"></Cursor1Time>
+      <ZoomStartTime time="1122994166fs"></ZoomStartTime>
+      <ZoomEndTime time="1123412167fs"></ZoomEndTime>
+      <Cursor1Time time="1123342500fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="125"></NameColumnWidth>
-      <ValueColumnWidth column_width="74"></ValueColumnWidth>
+      <ValueColumnWidth column_width="70"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="13" />
+   <WVObjectSize size="19" />
    <wvobject fp_name="/tb/dut/sram_controller_ext/clk_i" type="logic">
       <obj_property name="ElementShortName">clk_i</obj_property>
       <obj_property name="ObjectShortName">clk_i</obj_property>
@@ -27,10 +27,6 @@
    <wvobject fp_name="/tb/dut/hazard_controller/hazard_type" type="array">
       <obj_property name="ElementShortName">hazard_type[2:0]</obj_property>
       <obj_property name="ObjectShortName">hazard_type[2:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/if_im_master/cache_en_i" type="logic">
-      <obj_property name="ElementShortName">cache_en_i</obj_property>
-      <obj_property name="ObjectShortName">cache_en_i</obj_property>
    </wvobject>
    <wvobject fp_name="/tb/dut/if_im_master/inst_o" type="array">
       <obj_property name="ElementShortName">inst_o[31:0]</obj_property>
@@ -48,28 +44,57 @@
       <obj_property name="ElementShortName">wb_dat_i[31:0]</obj_property>
       <obj_property name="ObjectShortName">wb_dat_i[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/tb/dut/if_id_regs/clear_cache_o" type="logic">
-      <obj_property name="ElementShortName">clear_cache_o</obj_property>
-      <obj_property name="ObjectShortName">clear_cache_o</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/id_exe_regs/clear_cache_o" type="logic">
-      <obj_property name="ElementShortName">clear_cache_o</obj_property>
-      <obj_property name="ObjectShortName">clear_cache_o</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/if_icache/if_pc_i" type="array">
-      <obj_property name="ElementShortName">if_pc_i[31:0]</obj_property>
-      <obj_property name="ObjectShortName">if_pc_i[31:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/if_icache/valid_table" type="array">
-      <obj_property name="ElementShortName">valid_table[15:0]</obj_property>
-      <obj_property name="ObjectShortName">valid_table[15:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb/dut/if_icache/exe_clear_cache_i" type="logic">
-      <obj_property name="ElementShortName">exe_clear_cache_i</obj_property>
-      <obj_property name="ObjectShortName">exe_clear_cache_i</obj_property>
-   </wvobject>
    <wvobject fp_name="/tb/dut/id_decoder/op" type="array">
       <obj_property name="ElementShortName">op[5:0]</obj_property>
       <obj_property name="ObjectShortName">op[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/page_en_i" type="logic">
+      <obj_property name="ElementShortName">page_en_i</obj_property>
+      <obj_property name="ObjectShortName">page_en_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/vir_addr_i" type="array">
+      <obj_property name="ElementShortName">vir_addr_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">vir_addr_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/phy_addr_o" type="array">
+      <obj_property name="ElementShortName">phy_addr_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">phy_addr_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/phy_ready_o" type="logic">
+      <obj_property name="ElementShortName">phy_ready_o</obj_property>
+      <obj_property name="ObjectShortName">phy_ready_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/mmu_busy_o" type="logic">
+      <obj_property name="ElementShortName">mmu_busy_o</obj_property>
+      <obj_property name="ObjectShortName">mmu_busy_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/if_mmu/wb_ack_i" type="logic">
+      <obj_property name="ElementShortName">wb_ack_i</obj_property>
+      <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_mmu/vir_addr_i" type="array">
+      <obj_property name="ElementShortName">vir_addr_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">vir_addr_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_mmu/phy_addr_o" type="array">
+      <obj_property name="ElementShortName">phy_addr_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">phy_addr_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_mmu/phy_ready_o" type="logic">
+      <obj_property name="ElementShortName">phy_ready_o</obj_property>
+      <obj_property name="ObjectShortName">phy_ready_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_mmu/mmu_busy_o" type="logic">
+      <obj_property name="ElementShortName">mmu_busy_o</obj_property>
+      <obj_property name="ObjectShortName">mmu_busy_o</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/mem_mmu/wb_ack_i" type="logic">
+      <obj_property name="ElementShortName">wb_ack_i</obj_property>
+      <obj_property name="ObjectShortName">wb_ack_i</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb/dut/id_reg_file/regs" type="array">
+      <obj_property name="ElementShortName">regs[31:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">regs[31:0][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
 </wave_config>
