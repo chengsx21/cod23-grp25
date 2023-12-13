@@ -12,6 +12,8 @@ module if_im_master #(
     output logic im_ready_o,
     output logic cache_we_o,
 
+    output logic inst_misalign_en_o,
+
     // paging
     input wire [1:0] privilidge_i,
     input wire paging_en_i,
@@ -105,10 +107,11 @@ module if_im_master #(
             wb_cyc_o = ~wb_ack_i && (no_int_reg ? 1'b1 : ~cache_en_i);
             wb_stb_o = ~wb_ack_i && (no_int_reg ? 1'b1 : ~cache_en_i);
             wb_adr_o = pc_i;
-            inst_o = (wb_ack_i && im_cstate != READ_1_MISS) ? wb_dat_i : {DATA_WIDTH{1'b0}};
+            inst_o = (wb_ack_i && im_cstate != READ_1_MISS) ? wb_dat_i : 32'h0000_0013;
             im_ready_o = (cache_en_i && ~no_int_reg) || (~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS);
             cache_we_o = ~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS;
             mmu_next_fetch_o = 1'b1;
+            inst_misalign_en_o = (pc_i[1:0] != 2'b00);
         end
         else if (page_fault_en_i) begin
             wb_dat_o = {DATA_WIDTH{1'b0}};
@@ -121,6 +124,7 @@ module if_im_master #(
             im_ready_o = 1'b1;
             cache_we_o = 1'b0;
             mmu_next_fetch_o = 1'b1;
+            inst_misalign_en_o = 1'b0;
         end
         else begin
             wb_dat_o = {DATA_WIDTH{1'b0}};
@@ -129,10 +133,11 @@ module if_im_master #(
             wb_cyc_o = ~wb_ack_i && (no_int_reg ? 1'b1 : ~cache_en_i) && mmu_ready_i;
             wb_stb_o = ~wb_ack_i && (no_int_reg ? 1'b1 : ~cache_en_i) && mmu_ready_i;
             wb_adr_o = phy_addr_i;
-            inst_o = (wb_ack_i && im_cstate != READ_1_MISS && mmu_ready_i) ? wb_dat_i : {DATA_WIDTH{1'b0}};
+            inst_o = (wb_ack_i && im_cstate != READ_1_MISS && mmu_ready_i) ? wb_dat_i : 32'h0000_0013;
             im_ready_o = (cache_en_i && ~no_int_reg && mmu_ready_i) || (~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS && mmu_ready_i);
             cache_we_o = ~cache_en_i && wb_ack_i && im_cstate != READ_1_MISS && mmu_ready_i;
             mmu_next_fetch_o = (cache_en_i && ~no_int_reg && mmu_ready_i) || (~cache_en_i && wb_ack_i && mmu_ready_i);
+            inst_misalign_en_o = (phy_addr_i[1:0] != 2'b00);
         end
     end
 

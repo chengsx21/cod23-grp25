@@ -22,6 +22,10 @@ module id_csr_file #(
 
     input wire mret_en_i,
     input wire ecall_ebreak_en_i,
+    input wire inst_illegal_en_i,
+    input wire inst_misalign_en_i,
+    input wire load_misalign_en_i, 
+    input wire store_misalign_en_i,
     input wire if_page_fault_en_i,
     input wire mem_load_fault_en_i,
     input wire mem_store_fault_en_i,
@@ -55,7 +59,7 @@ module id_csr_file #(
     assign paging_en_o = satp[31];
     assign ppn_o = satp[21:0];
 
-    assign exception_en_o = (ecall_ebreak_en_i | mret_en_i | if_page_fault_en_i);
+    assign exception_en_o = (ecall_ebreak_en_i | mret_en_i | inst_illegal_en_i | inst_misalign_en_i | if_page_fault_en_i);
 
     always_comb begin
         if (ecall_ebreak_en_i) begin
@@ -63,6 +67,18 @@ module id_csr_file #(
         end
         else if (mret_en_i) begin
             exception_pc_o = mepc;
+        end
+        else if (inst_illegal_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else if (inst_misalign_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else if (load_misalign_en_i) begin
+            exception_pc_o = mtvec;
+        end
+        else if (store_misalign_en_i) begin
+            exception_pc_o = mtvec;
         end
         else if (mem_load_fault_en_i) begin
             exception_pc_o = mtvec;
@@ -147,6 +163,26 @@ module id_csr_file #(
             mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
             mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
             mepc <= pc_i;
+        end
+        else if (inst_illegal_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= {exception_type_i, exception_code_i[DATA_WIDTH-2:0]};
+            mepc <= pc_i;
+        end
+        else if (inst_misalign_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= 32'h0;
+            mepc <= pc_i;
+        end
+        else if (load_misalign_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= 32'h4;
+            mepc <= mem_pc_i;
+        end
+        else if (store_misalign_en_i) begin
+            mstatus <= {mstatus[31:13], privilege_mode_i, mstatus[10:0]};
+            mcause <= 32'h6;
+            mepc <= mem_pc_i;
         end
         else if (mem_load_fault_en_i) begin
             mstatus <= {mstatus[31:13], 2'b00, mstatus[10:0]};

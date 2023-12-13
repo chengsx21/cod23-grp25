@@ -185,6 +185,8 @@ module thinpad_top #(
 	logic [DATA_WIDTH/8-1:0] wb0_master_sel_o;
 	logic wb0_master_we_o;
 
+	logic if_inst_misalign_en;
+
 	if_im_master if_im_master (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -195,6 +197,8 @@ module thinpad_top #(
 		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
 		.cache_we_o(if_cache_we),
+
+		.inst_misalign_en_o(if_inst_misalign_en),
 
 		.privilidge_i(if_privilege_mode),
 		.paging_en_i(paging_en),
@@ -314,6 +318,8 @@ module thinpad_top #(
 	logic [1:0] id_privilege_mode;
 	logic id_page_fault_en;
 
+	logic id_inst_misalign_en;
+
 	if_id_regs if_id_regs (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -335,6 +341,8 @@ module thinpad_top #(
 		// [CSR]
 		.privilege_mode_i(if_privilege_mode),
 	    .privilege_mode_o(id_privilege_mode),
+		.inst_misalign_en_i(if_inst_misalign_en),
+		.inst_misalign_en_o(id_inst_misalign_en),
 		.if_page_fault_en_i(if_page_fault_en),
 		.if_page_fault_en_o(id_page_fault_en)
     );
@@ -363,6 +371,7 @@ module thinpad_top #(
 
 	logic id_mret_en;
 	logic id_ecall_ebreak_en;
+	logic id_inst_illegal_en;
 	logic id_exception_type;
 	logic [DATA_WIDTH-1:0] id_exception_code;
 	logic [1:0] id_exception_privilege_mode;
@@ -398,6 +407,7 @@ module thinpad_top #(
 
 		.mret_en_o(id_mret_en),
 		.ecall_ebreak_en_o(id_ecall_ebreak_en),
+		.inst_illegal_en_o(id_inst_illegal_en),
 		.exception_type_o(id_exception_type),
 		.exception_code_o(id_exception_code),
 		.exception_privilege_mode_o(id_exception_privilege_mode),
@@ -488,6 +498,10 @@ module thinpad_top #(
 
 		.mret_en_i(id_mret_en),
 		.ecall_ebreak_en_i(id_ecall_ebreak_en),
+		.inst_illegal_en_i(id_inst_illegal_en),
+		.inst_misalign_en_i(id_inst_misalign_en),
+		.load_misalign_en_i(mem_load_misalign_en),
+		.store_misalign_en_i(mem_store_misalign_en),
 		.if_page_fault_en_i(id_page_fault_en),
 		.mem_load_fault_en_i(mem_load_fault_en),
 		.mem_store_fault_en_i(mem_store_fault_en),
@@ -749,6 +763,9 @@ module thinpad_top #(
 	logic [DATA_WIDTH/8-1:0] wb1_master_sel_o;
 	logic wb1_master_we_o;
 
+	logic mem_load_misalign_en;
+	logic mem_store_misalign_en;
+
 	mem_dm_master mem_dm_master (
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
@@ -759,6 +776,9 @@ module thinpad_top #(
 		.dm_dat_i(mem_rs2_dat),
 		.dm_dat_o(mem_dm_dat),
 		.dm_ready_o(dm_ready),
+
+		.load_misalign_en_o(mem_load_misalign_en),
+		.store_misalign_en_o(mem_store_misalign_en),
 
 		.mt_mtime_i(mt_mtime),
 		.mt_mtimecmp_i(mt_mtimecmp),
@@ -890,6 +910,11 @@ module thinpad_top #(
 		.mem_load_fault_pc_i(id_exception_pc),
 		.mem_store_fault_en_i(mem_store_fault_en),
 		.mem_store_fault_pc_i(id_exception_pc),
+
+		.load_misalign_en_i(mem_load_misalign_en),
+		.load_misalign_pc_i(id_exception_pc),
+		.store_misalign_en_i(mem_store_misalign_en),
+		.store_misalign_pc_i(id_exception_pc),
 
 		.csr_exception_en_o(csr_exception_en),
 		.csr_exception_pc_o(csr_exception_pc),

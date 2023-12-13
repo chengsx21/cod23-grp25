@@ -12,6 +12,10 @@ module mem_dm_master #(
     output logic [DATA_WIDTH-1:0] dm_dat_o,
     output logic dm_ready_o,
 
+    // Exception
+    output logic load_misalign_en_o, 
+    output logic store_misalign_en_o,
+
     // Mtimer Interface Signals
     input wire [2*DATA_WIDTH-1:0] mt_mtime_i,
     input wire [2*DATA_WIDTH-1:0] mt_mtimecmp_i,
@@ -65,6 +69,8 @@ module mem_dm_master #(
             wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (dm_adr_i & 2'b11)) : 4'b1111;
             dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
             mmu_next_fetch_o = 1'b1;
+            load_misalign_en_o = dm_en_i && (~dm_we_i) && (dm_dat_width_i == 3'b100) && (dm_adr_i[0] != 2'b00);
+            store_misalign_en_o = dm_en_i && dm_we_i && (dm_dat_width_i == 3'b100) && (dm_adr_i[1:0] != 2'b00);
         end
         else if (page_fault_en_i) begin
             is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
@@ -78,6 +84,8 @@ module mem_dm_master #(
             wb_sel_o = 4'b1111;
             dm_ready_o = 1'b1;
             mmu_next_fetch_o = 1'b1;
+            load_misalign_en_o = 1'b0;
+            store_misalign_en_o = 1'b0;
         end
         else begin
             is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
@@ -91,6 +99,8 @@ module mem_dm_master #(
             wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (phy_addr_i & 2'b11)) : 4'b1111;
             dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
             mmu_next_fetch_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            load_misalign_en_o = dm_en_i && (~dm_we_i) && (dm_dat_width_i == 3'b100) && (phy_addr_i[1:0] != 2'b00);
+            store_misalign_en_o = dm_en_i && dm_we_i && (dm_dat_width_i == 3'b100) && (phy_addr_i[1:0] != 2'b00);
         end
 
         // Receive Ack from Slave

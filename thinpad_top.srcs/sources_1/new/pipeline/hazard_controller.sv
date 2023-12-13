@@ -52,15 +52,16 @@ module hazard_controller #(
     wire mem_raw_stall;
     wire writeback_raw_stall;
     
-    typedef enum logic [2:0] {
-        NONE = 3'b000,
-        MM = 3'b001,
-        IN = 3'b010,
-        DM = 3'b011,
-        BR = 3'b100,
-        RW = 3'b101,
-        EX = 3'b110,
-        IM = 3'b111
+    typedef enum logic [3:0] {
+        NONE = 4'b0000,
+        MM = 4'b0001,
+        IN = 4'b0010,
+        EX = 4'b0011,
+        DM = 4'b0100,
+        BR = 4'b0101,
+        RW = 4'b0110,
+        CSR = 4'b0111,
+        IM = 4'b1000
     } hazard_t;
     hazard_t hazard_type;
 
@@ -114,6 +115,23 @@ module hazard_controller #(
             mem_wb_bubble_o = 1;
 
             hazard_type = IN;
+        end
+
+        //* Exception *//
+        //* Flush the whole pipeline *//
+        else if ((~csr_mode) && exception_en_i) begin
+            pc_stall_o = 0;
+            if_id_stall_o = 0;
+            id_exe_stall_o = 0;
+            exe_mem_stall_o = 0;
+            mem_wb_stall_o = 0;
+
+            if_id_bubble_o = 1;
+            id_exe_bubble_o = 1;
+            exe_mem_bubble_o = 1;
+            mem_wb_bubble_o = 0;
+
+            hazard_type = EX;
         end
 
         //* DM not Ready *//
@@ -185,7 +203,7 @@ module hazard_controller #(
             exe_mem_bubble_o = 0;
             mem_wb_bubble_o = 0;
 
-            hazard_type = EX;
+            hazard_type = CSR;
         end
 
         //* IM not Ready *//

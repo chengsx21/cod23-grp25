@@ -31,6 +31,7 @@ module id_decoder #(
 
     output logic mret_en_o,
     output logic ecall_ebreak_en_o,
+    output logic inst_illegal_en_o,
     output logic exception_type_o, // 1 For Interrupt, 0 For Exception
     output logic [DATA_WIDTH-1:0] exception_code_o,
     output logic [1:0] exception_privilege_mode_o,
@@ -69,7 +70,8 @@ module id_decoder #(
         EBREAK = 6'b011010,
         ECALL = 6'b011011,
         MRET = 6'b011100,
-        SLTU = 6'b011101
+        SLTU = 6'b011101,
+        NOP = 6'b011110
     } Opcode_t;
     Opcode_t op;
 
@@ -122,7 +124,12 @@ module id_decoder #(
 
             7'b0010011: begin
                 if (func3 == 3'b000) begin
-                    op = ADDI;
+                    if (inst_i == 32'h0000_0013) begin
+                        op = NOP;
+                    end
+                    else begin
+                        op = ADDI;
+                    end
                 end
                 else if (func3 == 3'b111) begin
                     op = ANDI;
@@ -198,6 +205,9 @@ module id_decoder #(
                 else if (inst_i == 32'b00110000_00100000_00000000_01110011) begin
                     op = MRET;
                 end
+                else if (inst_i == 32'b00010010_00000000_00000000_01110011) begin
+                    op = NOP;
+                end
             end
 
             default: begin
@@ -225,11 +235,12 @@ module id_decoder #(
 
             mret_en_o = 1'b0;
             ecall_ebreak_en_o = 1'b0;
+            inst_illegal_en_o = 1'b0;
             exception_type_o = 1'b0;
             exception_code_o = 32'hC;
             exception_privilege_mode_o = 2'b11;
 
-            instruction_mode_o = 2'b11;
+            instruction_mode_o = 2'b00;
         end
         else begin
             br_op_o = 3'b000;
@@ -249,6 +260,7 @@ module id_decoder #(
 
             mret_en_o = 1'b0;
             ecall_ebreak_en_o = 1'b0;
+            inst_illegal_en_o = 1'b0;
             exception_type_o = 1'b0;
             exception_code_o = {DATA_WIDTH{1'b0}};
             exception_privilege_mode_o = 2'b00;
@@ -695,6 +707,39 @@ module id_decoder #(
                 exception_privilege_mode_o = 2'b00;
 
                 instruction_mode_o = 2'b11;
+            end
+
+            NOP: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b00;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+            end
+
+            DEFAULT: begin
+                br_op_o = 3'b000;
+                alu_a_mux_sel_o = 2'b01;
+                alu_b_mux_sel_o = 2'b01;
+                alu_op_o = 4'b0001;
+
+                dm_en_o = 1'b0;
+                dm_we_o = 1'b0;
+                dm_dat_width_o = 3'b100;
+                writeback_mux_sel_o = 2'b01;
+
+                reg_we_o = 1'b0;
+
+                inst_illegal_en_o = 1'b1;
+                exception_type_o = 1'b0;
+                exception_code_o = 32'h2;
+                exception_privilege_mode_o = 2'b11;
             end
         endcase
     end
