@@ -12,6 +12,10 @@ module mem_dm_master #(
     output logic [DATA_WIDTH-1:0] dm_dat_o,
     output logic dm_ready_o,
 
+    // Exception
+    output logic load_misalign_en_o, 
+    output logic store_misalign_en_o,
+
     // Mtimer Interface Signals
     input wire [2*DATA_WIDTH-1:0] mt_mtime_i,
     input wire [2*DATA_WIDTH-1:0] mt_mtimecmp_i,
@@ -19,6 +23,14 @@ module mem_dm_master #(
     output logic mt_mtimecmp_we_o,
     output logic mt_high_we_o,
     output logic [DATA_WIDTH-1:0] mt_mtime_wdata_o,
+
+    // paging
+    input wire [1:0] privilidge_i,
+    input wire page_en_i,
+    input wire mmu_ready_i,
+    input wire [ADDR_WIDTH-1:0] phy_addr_i,
+    input wire page_fault_en_i,
+    output logic mmu_next_fetch_o,
 
     // Wishbone Interface Signals
     output logic wb_cyc_o,
@@ -31,33 +43,69 @@ module mem_dm_master #(
     output logic wb_we_o
     );
 
-    logic wb_ack_reg;
-    logic [1:0] dm_state;
+    typedef enum logic [1:0] {
+        IDLE,
+        READ,
+        WRITE
+    } dm_state_t;
 
-    logic dm_en_reg;
-    logic dm_we_reg;
-    logic [2:0] dm_dat_width_reg;
-    logic [ADDR_WIDTH-1:0] dm_adr_reg;
-    logic [DATA_WIDTH-1:0] dm_dat_i_reg;
-    logic [DATA_WIDTH-1:0] dm_dat_o_reg;
+    dm_state_t dm_state;
 
-    logic dm_fetch_identical;
-    logic dm_fetch_ready;
+    logic clock_ack;
+    logic is_clock_adr;
     logic [DATA_WIDTH-1:0] mt_mtime_rdata;
-
-    //  Follow the Code in File `if_im_master.sv`
-    assign dm_fetch_identical = (dm_en_i == dm_en_reg) && (dm_we_i == dm_we_reg) && (dm_dat_width_i == dm_dat_width_reg) && (dm_adr_i == dm_adr_reg) && (dm_dat_i == dm_dat_i_reg);
-    assign dm_fetch_ready = (wb_ack_i || wb_ack_reg) && dm_fetch_identical;
-    assign dm_ready_o = (~dm_en_i) || dm_fetch_ready;
-
-    // Follow the Code in File `lab5_master.sv`
     logic [DATA_WIDTH-1:0] wb_dat_s;
-    assign wb_dat_s = (wb_dat_i >> ((dm_adr_reg & 2'b11) << 2'b11));
 
     always_comb begin
+        if (privilidge_i == 2'b11 || ~page_en_i) begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((dm_adr_i & 2'b11) << 2'b11));
+            wb_stb_o = dm_en_i && (~wb_ack_i) && (~clock_ack);
+            wb_cyc_o = wb_stb_o;
+            wb_adr_o = dm_adr_i;
+            wb_dat_o = dm_dat_i;
+            wb_we_o = dm_we_i;
+            wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (dm_adr_i & 2'b11)) : 4'b1111;
+            dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            mmu_next_fetch_o = 1'b1;
+            load_misalign_en_o = dm_en_i && (~dm_we_i) && (dm_dat_width_i == 3'b100) && (dm_adr_i[0] != 2'b00);
+            store_misalign_en_o = dm_en_i && dm_we_i && (dm_dat_width_i == 3'b100) && (dm_adr_i[1:0] != 2'b00);
+        end
+        else if (page_fault_en_i) begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((dm_adr_i & 2'b11) << 2'b11));
+            wb_stb_o = 1'b0;
+            wb_cyc_o = 1'b0;
+            wb_adr_o = {ADDR_WIDTH{1'b0}};
+            wb_dat_o = {DATA_WIDTH{1'b0}};
+            wb_we_o = 1'b0;
+            wb_sel_o = 4'b1111;
+            dm_ready_o = 1'b1;
+            mmu_next_fetch_o = 1'b1;
+            load_misalign_en_o = 1'b0;
+            store_misalign_en_o = 1'b0;
+        end
+        else begin
+            is_clock_adr = (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004);
+            clock_ack = dm_en_i && is_clock_adr;
+            wb_dat_s = (wb_dat_i >> ((phy_addr_i & 2'b11) << 2'b11));
+            wb_stb_o = dm_en_i && (~wb_ack_i) && (~clock_ack) && mmu_ready_i;
+            wb_cyc_o = wb_stb_o;
+            wb_adr_o = phy_addr_i;
+            wb_dat_o = dm_dat_i;
+            wb_we_o = dm_we_i;
+            wb_sel_o = (dm_we_i && dm_dat_width_i == 3'b001) ? (4'b0001 << (phy_addr_i & 2'b11)) : 4'b1111;
+            dm_ready_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            mmu_next_fetch_o = (~dm_en_i) || wb_ack_i || clock_ack;
+            load_misalign_en_o = dm_en_i && (~dm_we_i) && (dm_dat_width_i == 3'b100) && (phy_addr_i[1:0] != 2'b00);
+            store_misalign_en_o = dm_en_i && dm_we_i && (dm_dat_width_i == 3'b100) && (phy_addr_i[1:0] != 2'b00);
+        end
+
         // Receive Ack from Slave
         if (wb_ack_i) begin
-            case (dm_dat_width_reg)
+            case (dm_dat_width_i)
                 3'b001: begin
                     dm_dat_o = {{24{wb_dat_s[7]}}, wb_dat_s[7:0]};
                 end
@@ -65,9 +113,9 @@ module mem_dm_master #(
                     dm_dat_o = wb_dat_s;
                 end
             endcase
-        end
-        else if (dm_ready_o) begin
-            dm_dat_o = dm_dat_o_reg;
+        end 
+        else if (clock_ack) begin
+            dm_dat_o = mt_mtime_rdata;
         end
         else begin
             dm_dat_o = 32'h0000_0000;
@@ -121,101 +169,32 @@ module mem_dm_master #(
         end
     end
 
-    assign wb_cyc_o = wb_stb_o;
-
     always_ff @ (posedge clk_i) begin
         if (rst_i) begin
-            dm_state <= 2'b00;
-            wb_ack_reg <= 1'b0;
-            dm_en_reg <= 1'b0;
-            dm_we_reg <= 1'b0;
-            dm_dat_width_reg <= 3'b000;
-            dm_adr_reg <= 32'h0000_0000;
-            dm_dat_i_reg <= 32'h0000_0000;
-            dm_dat_o_reg <= 32'h0000_0000;
-
-            wb_stb_o <= 1'b0;
-            wb_adr_o <= 32'h0000_0000;
-            wb_dat_o <= 32'h0000_0000;
-            wb_sel_o <= 4'h0;
-            wb_we_o <= 1'b0;
+            dm_state <= IDLE;
         end
         else begin
             case (dm_state)
-                2'b00: begin
-                    //* State Init *//
-                    if (dm_en_i) begin
-                        dm_en_reg <= dm_en_i;
-                        dm_we_reg <= dm_we_i;
-                        dm_dat_width_reg <= dm_dat_width_i;
-                        dm_adr_reg <= dm_adr_i;
-                        dm_dat_i_reg <= dm_dat_i;
-
-                        if (dm_adr_i == 32'h0200bff8 || dm_adr_i == 32'h0200bffc || dm_adr_i == 32'h02004000 || dm_adr_i == 32'h02004004) begin
-                            wb_ack_reg <= 1'b1;
-                            dm_dat_o_reg <= mt_mtime_rdata;
+                IDLE: begin
+                    if (dm_en_i && (~is_clock_adr) && (mmu_ready_i || privilidge_i == 2'b11 || ~page_en_i)) begin
+                        if (dm_we_i) begin
+                            dm_state <= WRITE;
                         end
                         else begin
-                            wb_ack_reg <= 1'b0;
-
-                            // Go To State Write
-                            if (dm_we_i) begin
-                                dm_state <= 2'b10;
-                                wb_stb_o <= 1'b1;
-                                wb_adr_o <= dm_adr_i;
-                                wb_dat_o <= dm_dat_i;
-                                wb_we_o <= 1'b1;
-                                case (dm_dat_width_i)
-                                    // Follow the Code in File `lab5_master.sv`
-                                    3'b001: begin
-                                        wb_sel_o <= (4'b0001 << (dm_adr_i & 2'b11));
-                                    end
-                                    default: begin
-                                        wb_sel_o <= 4'b1111;
-                                    end
-                                endcase
-                            end
-
-                            // Go To State Read
-                            else begin
-                                dm_state <= 2'b01;
-                                wb_stb_o <= 1'b1;
-                                wb_adr_o <= dm_adr_i;
-                                wb_we_o <= 1'b0;
-                                wb_sel_o <= 4'b1111;
-                            end
+                            dm_state <= READ;
                         end
                     end
                 end
 
-                2'b01: begin
-                    //* State Read *//
+                READ: begin
                     if (wb_ack_i) begin
-                        dm_state <= 2'b00;
-                        wb_ack_reg <= 1'b1;
-                        wb_stb_o <= 1'b0;
-                        dm_en_reg <= 1'b0;
-                        dm_we_reg <= 1'b0;
-
-                        case (dm_dat_width_reg)
-                            3'b001: begin
-                                dm_dat_o_reg <= {{24{wb_dat_s[7]}}, wb_dat_s[7:0]};
-                            end
-                            default: begin
-                                dm_dat_o_reg <= wb_dat_s;
-                            end
-                        endcase
+                        dm_state <= IDLE;
                     end
                 end
 
-                2'b10: begin
-                    //* State Write *//
+                WRITE: begin
                     if (wb_ack_i) begin
-                        dm_state <= 2'b00;
-                        wb_ack_reg <= 1'b1;
-                        wb_stb_o <= 1'b0;
-                        dm_en_reg <= 1'b0;
-                        dm_we_reg <= 1'b0;
+                        dm_state <= IDLE;
                     end
                 end
             endcase

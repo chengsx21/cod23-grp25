@@ -76,7 +76,7 @@ module id_exe_regs #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            inst_o <= 0;
+            inst_o <= 32'h0000_0013;
             imm_o <= 0;
             rs1_o <= 0;
             rs2_o <= 0;
@@ -112,7 +112,7 @@ module id_exe_regs #(
         end else if (stall_i) begin
             // Do nothing   
         end else if (bubble_i) begin
-            inst_o <= 0;
+            inst_o <= 32'h0000_0013;
             imm_o <= 0;
             rs1_o <= 0;
             rs2_o <= 0;

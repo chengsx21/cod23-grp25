@@ -60,18 +60,19 @@ module tb;
 		reset_btn = 1;
 		#100;
 		reset_btn = 0;
-		#100000;
 
-		// #4000000;
-		// uart.pc_send_byte(8'h47);
-		// #10000;
-		// uart.pc_send_byte(8'hc0);
-		// #10000;
-		// uart.pc_send_byte(8'h10);
-		// #10000;
-		// uart.pc_send_byte(8'h00);
-		// #10000;
-		// uart.pc_send_byte(8'h80);
+		#400000;
+
+		#10000;
+		uart.pc_send_byte(8'h47);
+		#10000;
+		uart.pc_send_byte(8'h70);
+		#10000;
+		uart.pc_send_byte(8'h11);
+		#10000;
+		uart.pc_send_byte(8'h00);
+		#10000;
+		uart.pc_send_byte(8'h80);
 	end
 
 	// �������û���??

@@ -20,7 +20,7 @@ module if_icache #(
 
     always_comb begin
         if_cache_en_o = 1'b0;
-        if_r_inst_o = {DATA_WIDTH{1'b0}};
+        if_r_inst_o = 32'h0000_0013;
         if (valid_table[if_pc_i[5:2]] && (inst_addr_table[if_pc_i[5:2]] == if_pc_i)) begin
             if_cache_en_o = 1'b1;
             if_r_inst_o = inst_data_table[if_pc_i[5:2]];

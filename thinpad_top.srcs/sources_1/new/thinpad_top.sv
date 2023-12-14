@@ -2,7 +2,8 @@
 
 module thinpad_top #(
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 32
+    parameter ADDR_WIDTH = 32,
+	parameter PPN_WIDTH = 22
 ) (
     input wire clk_50M,     // 50MHz clock input
     input wire clk_11M0592, // 11.0592MHz clock input
@@ -195,14 +196,22 @@ module thinpad_top #(
 	logic if_cache_we;
 	logic if_clear_cache;
 
-	logic wb0_cyc_o;
-	logic wb0_stb_o;
-	logic wb0_ack_i;
-	logic [ADDR_WIDTH-1:0] wb0_adr_o;
-	logic [DATA_WIDTH-1:0] wb0_dat_o;
-	logic [DATA_WIDTH-1:0] wb0_dat_i;
-	logic [DATA_WIDTH/8-1:0] wb0_sel_o;
-	logic wb0_we_o;
+	logic paging_en;
+	logic if_mmu_ready;
+	logic [ADDR_WIDTH-1:0] if_phy_addr;
+	logic if_page_fault_en;
+	logic if_mmu_next_fetch;
+
+	logic wb0_master_cyc_o;
+	logic wb0_master_stb_o;
+	logic wb0_master_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_master_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_master_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_master_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_master_sel_o;
+	logic wb0_master_we_o;
+
+	logic if_inst_misalign_en;
 
 	if_im_master if_im_master (
 		.clk_i(sys_clk),
@@ -214,6 +223,101 @@ module thinpad_top #(
 		.inst_o(if_mem_inst),
 		.im_ready_o(im_ready),
 		.cache_we_o(if_cache_we),
+
+		.inst_misalign_en_o(if_inst_misalign_en),
+
+		.privilidge_i(if_privilege_mode),
+		.paging_en_i(paging_en),
+		.mmu_ready_i(if_mmu_ready),
+		.phy_addr_i(if_phy_addr),
+		.page_fault_en_i(if_page_fault_en),
+		.mmu_next_fetch_o(if_mmu_next_fetch),
+
+		.wb_cyc_o(wb0_master_cyc_o),
+		.wb_stb_o(wb0_master_stb_o),
+		.wb_ack_i(wb0_master_ack_i),
+		.wb_adr_o(wb0_master_adr_o),
+		.wb_dat_o(wb0_master_dat_o),
+		.wb_dat_i(wb0_master_dat_i),
+		.wb_sel_o(wb0_master_sel_o),
+		.wb_we_o(wb0_master_we_o)
+	);
+
+	logic [PPN_WIDTH-1:0] ppn;
+
+	logic if_mmu_busy;
+
+	logic wb0_mmu_cyc_o;
+	logic wb0_mmu_stb_o;
+	logic wb0_mmu_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_mmu_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_mmu_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_mmu_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_mmu_sel_o;
+	logic wb0_mmu_we_o;
+
+	mmu if_mmu (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.type_i(1'b0),
+		.mem_en_i(1'b0),
+		.mem_type_i(1'b0),
+
+		.privilidge_i(if_privilege_mode),
+		.page_en_i(paging_en),
+		.ppn_i(ppn),
+
+		.new_cycle_i(if_mmu_next_fetch),
+		.vir_addr_i(if_pc),
+		.phy_addr_o(if_phy_addr),
+		.phy_ready_o(if_mmu_ready),
+		.mmu_busy_o(if_mmu_busy),
+
+		.page_fault_en_o(if_page_fault_en),
+		.inst_page_fault_o(),
+		.store_page_fault_o(),
+		.load_page_fault_o(),
+
+		.wb_cyc_o(wb0_mmu_cyc_o),
+		.wb_stb_o(wb0_mmu_stb_o),
+		.wb_ack_i(wb0_mmu_ack_i),
+		.wb_adr_o(wb0_mmu_adr_o),
+		.wb_dat_o(wb0_mmu_dat_o),
+		.wb_dat_i(wb0_mmu_dat_i),
+		.wb_sel_o(wb0_mmu_sel_o),
+		.wb_we_o(wb0_mmu_we_o)
+	);
+
+	logic wb0_cyc_o;
+	logic wb0_stb_o;
+	logic wb0_ack_i;
+	logic [ADDR_WIDTH-1:0] wb0_adr_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_o;
+	logic [DATA_WIDTH-1:0] wb0_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb0_sel_o;
+	logic wb0_we_o;
+
+	mmu_master_mux if_mmu_master_mux (
+		.sel_i(if_mmu_busy),
+
+		.mmu_wb_cyc_i(wb0_mmu_cyc_o),
+		.mmu_wb_stb_i(wb0_mmu_stb_o),
+		.mmu_wb_ack_o(wb0_mmu_ack_i),
+		.mmu_wb_adr_i(wb0_mmu_adr_o),
+		.mmu_wb_dat_i(wb0_mmu_dat_o),
+		.mmu_wb_dat_o(wb0_mmu_dat_i),
+		.mmu_wb_sel_i(wb0_mmu_sel_o),
+		.mmu_wb_we_i(wb0_mmu_we_o),
+
+		.master_wb_cyc_i(wb0_master_cyc_o),
+		.master_wb_stb_i(wb0_master_stb_o),
+		.master_wb_ack_o(wb0_master_ack_i),
+		.master_wb_adr_i(wb0_master_adr_o),
+		.master_wb_dat_i(wb0_master_dat_o),
+		.master_wb_dat_o(wb0_master_dat_i),
+		.master_wb_sel_i(wb0_master_sel_o),
+		.master_wb_we_i(wb0_master_we_o),
 
 		.wb_cyc_o(wb0_cyc_o),
 		.wb_stb_o(wb0_stb_o),
@@ -238,6 +342,9 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_inst;
 
 	logic [1:0] id_privilege_mode;
+	logic id_page_fault_en;
+
+	logic id_inst_misalign_en;
 
 	if_id_regs if_id_regs (
 		.clk_i(sys_clk),
@@ -259,7 +366,11 @@ module thinpad_top #(
 
 		// [CSR]
 		.privilege_mode_i(if_privilege_mode),
-	    .privilege_mode_o(id_privilege_mode)
+	    .privilege_mode_o(id_privilege_mode),
+		.inst_misalign_en_i(if_inst_misalign_en),
+		.inst_misalign_en_o(id_inst_misalign_en),
+		.if_page_fault_en_i(if_page_fault_en),
+		.if_page_fault_en_o(id_page_fault_en)
     );
 
 	//* ================= ID ================= *//
@@ -286,6 +397,7 @@ module thinpad_top #(
 
 	logic id_mret_en;
 	logic id_ecall_ebreak_en;
+	logic id_inst_illegal_en;
 	logic id_exception_type;
 	logic [DATA_WIDTH-1:0] id_exception_code;
 	logic [1:0] id_exception_privilege_mode;
@@ -293,6 +405,7 @@ module thinpad_top #(
 
  	id_decoder id_decoder (
 		.inst_i(id_inst),
+		.if_page_fault_en_i(id_page_fault_en),
 
 		// [ID] ~ [EXE]
 		.rs1_o(id_rs1),
@@ -320,6 +433,7 @@ module thinpad_top #(
 
 		.mret_en_o(id_mret_en),
 		.ecall_ebreak_en_o(id_ecall_ebreak_en),
+		.inst_illegal_en_o(id_inst_illegal_en),
 		.exception_type_o(id_exception_type),
 		.exception_code_o(id_exception_code),
 		.exception_privilege_mode_o(id_exception_privilege_mode),
@@ -380,6 +494,12 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] id_csr_rdata;
 	logic [DATA_WIDTH-1:0] id_csr_wdata;
 
+	logic mem_page_fault_en;
+	logic mem_load_fault_en;
+	logic mem_store_fault_en;
+
+	logic mem_mmu_ready;
+
 	logic id_exception_en;
 	logic [ADDR_WIDTH-1:0] id_exception_pc;
 	logic mtime_interrupt_en;
@@ -390,6 +510,7 @@ module thinpad_top #(
 		.rst_i(sys_rst),
 
 		.pc_i(id_pc),
+		.mem_pc_i(mem_pc),
 		.privilege_mode_i(id_privilege_mode),
 
 		.csr_op_i(id_csr_op),
@@ -403,8 +524,18 @@ module thinpad_top #(
 
 		.mret_en_i(id_mret_en),
 		.ecall_ebreak_en_i(id_ecall_ebreak_en),
+		.inst_illegal_en_i(id_inst_illegal_en),
+		.inst_misalign_en_i(id_inst_misalign_en),
+		.load_misalign_en_i(mem_load_misalign_en),
+		.store_misalign_en_i(mem_store_misalign_en),
+		.if_page_fault_en_i(id_page_fault_en),
+		.mem_load_fault_en_i(mem_load_fault_en),
+		.mem_store_fault_en_i(mem_store_fault_en),
 		.exception_type_i(id_exception_type),
 		.exception_code_i(id_exception_code),
+
+		.if_mmu_ready_i(if_mmu_ready),
+		.mem_mmu_ready_i(mem_mmu_ready),
 
 		.interrupt_en_o(mtime_interrupt_en),
 		.interrupt_pc_o(mtime_interrupt_pc),
@@ -413,8 +544,11 @@ module thinpad_top #(
 		.exception_pc_o(id_exception_pc),
 
 		.csr_rdata_o(id_csr_rdata),
-		.csr_wdata_o(id_csr_wdata)
-		);
+		.csr_wdata_o(id_csr_wdata),
+
+		.paging_en_o(paging_en),
+		.ppn_o(ppn)
+	);
 
 	//* =============== ID-EXE =============== *//
 
@@ -643,14 +777,20 @@ module thinpad_top #(
 	logic [DATA_WIDTH-1:0] mem_dm_dat;
 	logic dm_ready;
 
-	logic wb1_cyc_o;
-	logic wb1_stb_o;
-	logic wb1_ack_i;
-	logic [ADDR_WIDTH-1:0] wb1_adr_o;
-	logic [DATA_WIDTH-1:0] wb1_dat_o;
-	logic [DATA_WIDTH-1:0] wb1_dat_i;
-	logic [DATA_WIDTH/8-1:0] wb1_sel_o;
-	logic wb1_we_o;
+	logic [ADDR_WIDTH-1:0] mem_phy_addr;
+	logic mem_mmu_next_fetch;
+
+	logic wb1_master_cyc_o;
+	logic wb1_master_stb_o;
+	logic wb1_master_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_master_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_master_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_master_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_master_sel_o;
+	logic wb1_master_we_o;
+
+	logic mem_load_misalign_en;
+	logic mem_store_misalign_en;
 
 	mem_dm_master mem_dm_master (
 		.clk_i(sys_clk),
@@ -663,12 +803,106 @@ module thinpad_top #(
 		.dm_dat_o(mem_dm_dat),
 		.dm_ready_o(dm_ready),
 
+		.load_misalign_en_o(mem_load_misalign_en),
+		.store_misalign_en_o(mem_store_misalign_en),
+
 		.mt_mtime_i(mt_mtime),
 		.mt_mtimecmp_i(mt_mtimecmp),
 		.mt_mtime_we_o(mt_mtime_we),
 		.mt_mtimecmp_we_o(mt_mtimecmp_we),
 		.mt_high_we_o(mt_high_we),
 		.mt_mtime_wdata_o(mt_mtime_wdata),
+
+		.privilidge_i(mem_privilege_mode),
+		.page_en_i(paging_en),
+		.mmu_ready_i(mem_mmu_ready),
+		.phy_addr_i(mem_phy_addr),
+		.page_fault_en_i(mem_page_fault_en),
+		.mmu_next_fetch_o(mem_mmu_next_fetch),
+
+		.wb_cyc_o(wb1_master_cyc_o),
+		.wb_stb_o(wb1_master_stb_o),
+		.wb_ack_i(wb1_master_ack_i),
+		.wb_adr_o(wb1_master_adr_o),
+		.wb_dat_o(wb1_master_dat_o),
+		.wb_dat_i(wb1_master_dat_i),
+		.wb_sel_o(wb1_master_sel_o),
+		.wb_we_o(wb1_master_we_o)
+    );
+
+	logic mem_mmu_busy;
+
+	logic wb1_mmu_cyc_o;
+	logic wb1_mmu_stb_o;
+	logic wb1_mmu_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_mmu_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_mmu_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_mmu_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_mmu_sel_o;
+	logic wb1_mmu_we_o;
+
+	mmu mem_mmu (
+		.clk_i(sys_clk),
+		.rst_i(sys_rst),
+
+		.type_i(1'b1),
+		.mem_type_i(mem_dm_we),
+		.mem_en_i(mem_dm_en),
+
+		.privilidge_i(mem_privilege_mode),
+		.page_en_i(paging_en),
+		.ppn_i(ppn),
+
+		.new_cycle_i(mem_mmu_next_fetch),
+		.vir_addr_i(mem_alu_y),
+		.phy_addr_o(mem_phy_addr),
+		.phy_ready_o(mem_mmu_ready),
+		.mmu_busy_o(mem_mmu_busy),
+
+		.page_fault_en_o(mem_page_fault_en),
+		.inst_page_fault_o(),
+		.store_page_fault_o(mem_store_fault_en),
+		.load_page_fault_o(mem_load_fault_en),
+
+		.wb_cyc_o(wb1_mmu_cyc_o),
+		.wb_stb_o(wb1_mmu_stb_o),
+		.wb_ack_i(wb1_mmu_ack_i),
+		.wb_adr_o(wb1_mmu_adr_o),
+		.wb_dat_o(wb1_mmu_dat_o),
+		.wb_dat_i(wb1_mmu_dat_i),
+		.wb_sel_o(wb1_mmu_sel_o),
+		.wb_we_o(wb1_mmu_we_o)
+	);
+
+	logic wb1_cyc_o;
+	logic wb1_stb_o;
+	logic wb1_ack_i;
+	logic [ADDR_WIDTH-1:0] wb1_adr_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_o;
+	logic [DATA_WIDTH-1:0] wb1_dat_i;
+	logic [DATA_WIDTH/8-1:0] wb1_sel_o;
+	logic wb1_we_o;
+
+	mmu_master_mux mem_mmu_master_mux (
+		.sel_i(mem_mmu_busy),
+
+		.mmu_wb_cyc_i(wb1_mmu_cyc_o),
+		.mmu_wb_stb_i(wb1_mmu_stb_o),
+		.mmu_wb_ack_o(wb1_mmu_ack_i),
+		.mmu_wb_adr_i(wb1_mmu_adr_o),
+		.mmu_wb_dat_i(wb1_mmu_dat_o),
+		.mmu_wb_dat_o(wb1_mmu_dat_i),
+		.mmu_wb_sel_i(wb1_mmu_sel_o),
+		.mmu_wb_we_i(wb1_mmu_we_o),
+
+		.master_wb_cyc_i(wb1_master_cyc_o),
+		.master_wb_stb_i(wb1_master_stb_o),
+		.master_wb_ack_o(wb1_master_ack_i),
+		.master_wb_adr_i(wb1_master_adr_o),
+		.master_wb_dat_i(wb1_master_dat_o),
+		.master_wb_dat_o(wb1_master_dat_i),
+		.master_wb_sel_i(wb1_master_sel_o),
+		.master_wb_we_i(wb1_master_we_o),
 
 		.wb_cyc_o(wb1_cyc_o),
 		.wb_stb_o(wb1_stb_o),
@@ -678,7 +912,7 @@ module thinpad_top #(
 		.wb_dat_i(wb1_dat_i),
 		.wb_sel_o(wb1_sel_o),
 		.wb_we_o(wb1_we_o)
-    );
+	);
 
 	logic [DATA_WIDTH-1:0] mem_reg_dat;
 
@@ -697,6 +931,16 @@ module thinpad_top #(
 
 		.interrupt_en_i(mtime_interrupt_en),
 		.interrupt_pc_i(mtime_interrupt_pc),
+
+		.mem_load_fault_en_i(mem_load_fault_en),
+		.mem_load_fault_pc_i(id_exception_pc),
+		.mem_store_fault_en_i(mem_store_fault_en),
+		.mem_store_fault_pc_i(id_exception_pc),
+
+		.load_misalign_en_i(mem_load_misalign_en),
+		.load_misalign_pc_i(id_exception_pc),
+		.store_misalign_en_i(mem_store_misalign_en),
+		.store_misalign_pc_i(id_exception_pc),
 
 		.csr_exception_en_o(csr_exception_en),
 		.csr_exception_pc_o(csr_exception_pc),
@@ -793,6 +1037,9 @@ module thinpad_top #(
 		.exception_en_i(csr_exception_en),
 		.interrupt_en_i(mtime_interrupt_en),
 
+		.if_mmu_ready_i(if_mmu_ready),
+		.mem_mmu_ready_i(mem_mmu_ready),
+
 		.pc_sel_o(pc_sel),
 		.pc_stall_o(pc_stall),
 		.if_id_stall_o(if_id_stall),
@@ -859,7 +1106,7 @@ module thinpad_top #(
 		.clk_i(sys_clk),
 		.rst_i(sys_rst),
 
-		.if_pc_i(if_pc),
+		.if_pc_i(wb0_adr_o),
 
 		.if_r_inst_o(if_cache_inst),
 		.if_cache_en_o(if_cache_en),
