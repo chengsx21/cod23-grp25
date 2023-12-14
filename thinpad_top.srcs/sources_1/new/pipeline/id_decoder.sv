@@ -70,8 +70,7 @@ module id_decoder #(
         EBREAK = 6'b011010,
         ECALL = 6'b011011,
         MRET = 6'b011100,
-        SLTU = 6'b011101,
-        NOP = 6'b011110
+        SLTU = 6'b011101
     } Opcode_t;
     Opcode_t op;
 
@@ -124,12 +123,7 @@ module id_decoder #(
 
             7'b0010011: begin
                 if (func3 == 3'b000) begin
-                    if (inst_i == 32'h0000_0013) begin
-                        op = NOP;
-                    end
-                    else begin
-                        op = ADDI;
-                    end
+                    op = ADDI;
                 end
                 else if (func3 == 3'b111) begin
                     op = ANDI;
@@ -204,9 +198,6 @@ module id_decoder #(
                 end
                 else if (inst_i == 32'b00110000_00100000_00000000_01110011) begin
                     op = MRET;
-                end
-                else if (inst_i == 32'b00010010_00000000_00000000_01110011) begin
-                    op = NOP;
                 end
             end
 
@@ -707,20 +698,6 @@ module id_decoder #(
                 exception_privilege_mode_o = 2'b00;
 
                 instruction_mode_o = 2'b11;
-            end
-
-            NOP: begin
-                br_op_o = 3'b000;
-                alu_a_mux_sel_o = 2'b00;
-                alu_b_mux_sel_o = 2'b01;
-                alu_op_o = 4'b0001;
-
-                dm_en_o = 1'b0;
-                dm_we_o = 1'b0;
-                dm_dat_width_o = 3'b100;
-                writeback_mux_sel_o = 2'b01;
-
-                reg_we_o = 1'b0;
             end
 
             DEFAULT: begin

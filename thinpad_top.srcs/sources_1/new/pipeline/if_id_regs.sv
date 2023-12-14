@@ -14,6 +14,8 @@ module if_id_regs #(
     output logic predict_o,
     input wire clear_cache_i,
     output logic clear_cache_o,
+    input wire clear_tlb_i,
+    output logic clear_tlb_o,
 
     // [EXE] ~ [MEM]
     input wire [DATA_WIDTH-1:0] pc_i,
@@ -35,6 +37,7 @@ module if_id_regs #(
             predict_o <= 0;
             privilege_mode_o <= 2'b11;
             clear_cache_o <= 0;
+            clear_tlb_o <= 0;
             inst_misalign_en_o <= 0;
             if_page_fault_en_o <= 0;
         end else if (stall_i) begin
@@ -45,6 +48,7 @@ module if_id_regs #(
             predict_o <= 0;
             privilege_mode_o <= privilege_mode_i;
             clear_cache_o <= 0;
+            clear_tlb_o <= 0;
             inst_misalign_en_o <= 0;
             if_page_fault_en_o <= 0;
         end else begin
@@ -53,6 +57,7 @@ module if_id_regs #(
             predict_o <= predict_i;
             privilege_mode_o <= privilege_mode_i;
             clear_cache_o <= clear_cache_i;
+            clear_tlb_o <= clear_tlb_i;
             inst_misalign_en_o <= inst_misalign_en_i;
             if_page_fault_en_o <= if_page_fault_en_i;
         end

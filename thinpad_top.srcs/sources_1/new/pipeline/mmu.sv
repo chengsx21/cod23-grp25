@@ -1,8 +1,7 @@
 module mmu #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 32,
-    parameter PPN_WIDTH = 22
-    // only for sv32 page
+    parameter PPN_WIDTH = 22    // only for sv32 page
 ) (
     input wire clk_i,
     input wire rst_i,
@@ -25,6 +24,8 @@ module mmu #(
     output logic inst_page_fault_o,
     output logic store_page_fault_o,
     output logic load_page_fault_o,
+
+    input wire exe_clear_tlb_i,
 
     // Wishbone Interface Signals
     output logic wb_cyc_o,
@@ -57,6 +58,14 @@ module mmu #(
     logic store_page_fault;
     logic invalid_page;
     logic invalid_privilege_mode;
+
+    reg [15:0][19:0] vir_page_number_table;
+    reg [15:0][19:0] phy_page_number_table;
+    reg [15:0] valid_table;
+    reg first_done;
+    wire tlb_hit;
+
+    assign tlb_hit = valid_table[vir_addr_i[15:12]] && (vir_page_number_table[vir_addr_i[15:12]] == vir_addr_i[31:12]);
 
     always_comb begin
         // UXWRV 43210
@@ -102,6 +111,38 @@ module mmu #(
                     store_page_fault_o <= 1'b1;
                 end
             end
+        end
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            first_done <= 1'b0;
+        end
+        else begin
+            if (mmu_cstate == PT_READ_2 && mmu_nstate == DONE) begin
+                first_done <= 1'b1;
+            end
+            else begin
+                first_done <= 1'b0;
+            end
+        end
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            for (integer i = 0; i < 16; i = i + 1) begin
+                vir_page_number_table[i] <= 20'b0;
+                phy_page_number_table[i] <= 20'b0;
+                valid_table[i] <= 1'b0;
+            end
+        end
+        else if (exe_clear_tlb_i) begin
+            valid_table <= 16'b0;
+        end
+        else if (first_done && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i) begin
+            vir_page_number_table[vir_addr_i[15:12]] <= vir_addr_i[31:12];
+            phy_page_number_table[vir_addr_i[15:12]] <= phy_addr_o[31:12];
+            valid_table[vir_addr_i[15:12]] <= 1'b1;
         end
     end
 
@@ -158,16 +199,16 @@ module mmu #(
 
     always_comb begin
         clock_adr_comb = vir_addr_i == 32'h0200bff8 || vir_addr_i == 32'h0200bffc || vir_addr_i == 32'h02004000 || vir_addr_i == 32'h02004004;
-        wb_cyc_o = page_en_i && privilidge_i == 2'b00 && ((~type_i) || (~clock_adr_comb && mem_en_i)) && (~wb_ack_i) && (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2);
+        wb_cyc_o = page_en_i && privilidge_i == 2'b00 && ((~type_i) || (~clock_adr_comb && mem_en_i)) && (~wb_ack_i) && (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ~tlb_hit;
         wb_stb_o = wb_cyc_o;
         wb_dat_o = {DATA_WIDTH{1'b0}};
         wb_sel_o = 4'b1111;
         wb_we_o = 1'b0;
         wb_adr_o = {DATA_WIDTH{1'b0}}; //default
 
-        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT || (type_i && (clock_adr_comb || (~mem_en_i))) || privilidge_i == 2'b11 || ~page_en_i;
-        phy_addr_o = mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}};
-        mmu_busy_o = (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i;
+        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT || (type_i && (clock_adr_comb || (~mem_en_i))) || privilidge_i == 2'b11 || ~page_en_i || tlb_hit;
+        phy_addr_o = tlb_hit ? {phy_page_number_table[vir_addr_i[15:12]], vir_addr_i[11:0]} : (mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}});
+        mmu_busy_o = (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i && ~tlb_hit;
 
         case (mmu_cstate)
             // only for sv32 page
