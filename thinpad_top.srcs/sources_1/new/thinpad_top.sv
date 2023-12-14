@@ -169,6 +169,7 @@ module thinpad_top #(
 	logic if_cache_en;
 	logic if_cache_we;
 	logic if_clear_cache;
+	logic if_clear_tlb;
 
 	logic paging_en;
 	logic if_mmu_ready;
@@ -253,6 +254,8 @@ module thinpad_top #(
 		.store_page_fault_o(),
 		.load_page_fault_o(),
 
+		.exe_clear_tlb_i(exe_clear_tlb),
+
 		.wb_cyc_o(wb0_mmu_cyc_o),
 		.wb_stb_o(wb0_mmu_stb_o),
 		.wb_ack_i(wb0_mmu_ack_i),
@@ -311,6 +314,7 @@ module thinpad_top #(
 	logic if_predict;
 	logic id_predict;
 	logic id_clear_cache;
+	logic id_clear_tlb;
 
 	logic [ADDR_WIDTH-1:0] id_pc;
 	logic [DATA_WIDTH-1:0] id_inst;
@@ -333,6 +337,8 @@ module thinpad_top #(
 		.predict_o(id_predict),
 		.clear_cache_i(if_clear_cache),
 		.clear_cache_o(id_clear_cache),
+		.clear_tlb_i(if_clear_tlb),
+		.clear_tlb_o(id_clear_tlb),
 
 		// [EXE] ~ [MEM]
 		.pc_i(if_pc),
@@ -544,6 +550,7 @@ module thinpad_top #(
 	logic [3:0] exe_alu_op;
 	logic exe_predict;
 	logic exe_clear_cache;
+	logic exe_clear_tlb;
 
 	logic exe_dm_en;
 	logic exe_dm_we;
@@ -593,6 +600,8 @@ module thinpad_top #(
 		.predict_o(exe_predict),
 		.clear_cache_i(id_clear_cache),
 		.clear_cache_o(exe_clear_cache),
+		.clear_tlb_i(id_clear_tlb),
+		.clear_tlb_o(exe_clear_tlb),
 
 		// [EXE] ~ [MEM]
 		.pc_i(id_pc),
@@ -837,6 +846,8 @@ module thinpad_top #(
 		.inst_page_fault_o(),
 		.store_page_fault_o(mem_store_fault_en),
 		.load_page_fault_o(mem_load_fault_en),
+
+		.exe_clear_tlb_i(exe_clear_tlb),
 
 		.wb_cyc_o(wb1_mmu_cyc_o),
 		.wb_stb_o(wb1_mmu_stb_o),
@@ -1098,7 +1109,8 @@ module thinpad_top #(
     	.mem_inst_i(if_mem_inst),
         .cache_en_i(if_cache_en),
         .inst_o(if_inst),
-		.clear_cache_o(if_clear_cache)
+		.clear_cache_o(if_clear_cache),
+		.clear_tlb_o(if_clear_tlb)
 	);
 
 	//* ================ ARBITER ================ *//

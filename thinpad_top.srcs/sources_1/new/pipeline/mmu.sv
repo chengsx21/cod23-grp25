@@ -25,6 +25,8 @@ module mmu #(
     output logic store_page_fault_o,
     output logic load_page_fault_o,
 
+    input wire exe_clear_tlb_i,
+
     // Wishbone Interface Signals
     output logic wb_cyc_o,
     output logic wb_stb_o,
@@ -133,6 +135,9 @@ module mmu #(
                 phy_page_number_table[i] <= 20'b0;
                 valid_table[i] <= 1'b0;
             end
+        end
+        else if (exe_clear_tlb_i) begin
+            valid_table <= 16'b0;
         end
         else if (first_done && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i) begin
             vir_page_number_table[vir_addr_i[15:12]] <= vir_addr_i[31:12];
