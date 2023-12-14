@@ -31,8 +31,8 @@ module vga #(
     
 
     output wire vga_bram_en,
-    output wire [16:0] vga_bram_addr,
-    input wire [31:0] vga_bram_data,
+    output wire [18:0] vga_bram_addr,
+    input wire [7:0] vga_bram_data,
 
     output reg vga_data_enable,
     output reg hsync_reg,
@@ -41,7 +41,10 @@ module vga #(
     output reg [2:0] video_green,  // Green pixel, 3 bits
     output reg [1:0] video_blue   // Blue pixel, 2 bits
 );
-
+    initial begin
+        hdata <= '0;
+        vdata <= '0;
+    end
     wire hsync, vsync;
 
     always @(posedge clk) begin
@@ -64,36 +67,12 @@ module vga #(
         end
     end
 
-    assign vga_bram_addr = ((vdata << 9)+(vdata << 8)+ (vdata << 5) + hdata) >> 2;
+    assign vga_bram_addr = ((vdata << 9)+(vdata << 8)+ (vdata << 5) + hdata);
 
     always_comb begin
-        case (vdata[1:0])
-            2'b11: begin
-                video_red = vga_bram_data[31:29];
-                video_green = vga_bram_data[28:26];
-                video_blue = vga_bram_data[25:24];
-            end 
-            2'b10: begin
-                video_red = vga_bram_data[23:21];
-                video_green = vga_bram_data[20:18];
-                video_blue = vga_bram_data[17:16];
-            end 
-            2'b01: begin
-                video_red = vga_bram_data[15:13];
-                video_green = vga_bram_data[12:10];
-                video_blue = vga_bram_data[9:8];
-            end 
-            2'b00: begin
-                video_red = vga_bram_data[7:5];
-                video_green = vga_bram_data[4:2];
-                video_blue = vga_bram_data[1:0];
-            end 
-            default: begin
-                video_red = '0;
-                video_green = '0;
-                video_blue = '0;
-            end
-        endcase
+        video_red = vga_bram_data[7:5];
+        video_green = vga_bram_data[4:2];
+        video_blue = vga_bram_data[1:0];
     end
 
 

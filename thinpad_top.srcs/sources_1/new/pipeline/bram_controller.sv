@@ -2,8 +2,8 @@ module bram_controller #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 32,
 
-    parameter BRAM_ADDR_WIDTH = 17,
-    parameter BRAM_DATA_WIDTH = 32,
+    parameter BRAM_ADDR_WIDTH = 19,
+    parameter BRAM_DATA_WIDTH = 8,
 
     localparam BRAM_BYTES = BRAM_DATA_WIDTH / 8
 ) (
@@ -26,7 +26,7 @@ module bram_controller #(
     output reg [BRAM_DATA_WIDTH-1:0] bram_data_in,
     input wire [BRAM_DATA_WIDTH-1:0] bram_data_out,
     output reg bram_en,
-    output reg [BRAM_BYTES-1:0] bram_we
+    output reg bram_we
 );
 
   // TODO: 实现 bram 控制器
@@ -53,7 +53,7 @@ module bram_controller #(
   always_comb begin
     case (state)
       STATE_IDLE: begin
-        if (wb_cyc_i) begin
+        if (wb_stb_i & wb_cyc_i) begin
           if (wb_we_i) begin
             n_state = STATE_WRITE_2;
           end
@@ -79,14 +79,14 @@ module bram_controller #(
 
   always_comb begin
 
-    bram_addr = wb_adr_i >> 2'b10;
-    bram_data_in = wb_dat_i;
+    bram_addr = wb_adr_i;
+    bram_data_in = wb_dat_i[BRAM_DATA_WIDTH-1:0];
     
     bram_en = wb_cyc_i;
-    bram_we = wb_we_i ? wb_sel_i : 4'b0000;
+    bram_we = wb_we_i;
 
     wb_ack_o = ((state == STATE_WRITE_2)|(state == STATE_READ_2));
-    wb_dat_o = bram_data_out;
+    wb_dat_o = {24'b0, bram_data_out};
   end
 
 endmodule

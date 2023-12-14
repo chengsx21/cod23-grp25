@@ -84,7 +84,7 @@ module thinpad_top #(
 );
 
 	/* =========== Demo code begin =========== */
-
+	
 	// PLL frequency divider
 	logic locked, clk50M;
 	pll_example clock_gen (
@@ -96,16 +96,17 @@ module thinpad_top #(
 		.reset(reset_btn),  // PLL reset
 		.locked(locked)  // PLL lock signal, 1 when stable
 	);
+	assign video_clk = clk50M;
 
-	logic [16:0] bram_addr_a;
-    logic [31:0] bram_data_in_a;
-	logic [31:0] bram_data_out_a;
+	logic [18:0] bram_addr_a;
+    logic [7:0] bram_data_in_a;
+	logic [7:0] bram_data_out_a;
 	logic bram_en_a;
-    logic [3:0] bram_we_a;
+    logic bram_we_a;
 
 	logic vga_bram_en;
-    logic [16:0] vga_bram_addr;
-    logic [31:0] vga_bram_data;
+    logic [18:0] vga_bram_addr;
+    logic [7:0] vga_bram_data;
 
 	block_mem block_mem_1 (
 		.clka(sys_clk),
@@ -117,9 +118,9 @@ module thinpad_top #(
 
 		.clkb(sys_clk),
 		.enb(vga_bram_en),
-		.web(4'b0000),
+		.web(0),
 		.addrb(vga_bram_addr),
-		.dinb(32'b0),
+		.dinb(8'b0),
 		.doutb(vga_bram_data)
 	);
 	logic reset_of_clk50M;
@@ -1125,8 +1126,8 @@ module thinpad_top #(
     );
 
 	bram_controller #(
-        .BRAM_ADDR_WIDTH(17),
-        .BRAM_DATA_WIDTH(32)
+        .BRAM_ADDR_WIDTH(19),
+        .BRAM_DATA_WIDTH(8)
     ) bram_controller (
         .clk_i(sys_clk),
         .rst_i(sys_rst),
