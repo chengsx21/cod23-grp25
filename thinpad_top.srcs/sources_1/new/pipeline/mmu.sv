@@ -137,9 +137,9 @@ module mmu #(
                 valid_table[i] <= 1'b0;
             end
         end
-        else if (exe_clear_tlb_i) begin
-            valid_table <= 16'b0;
-        end
+        // else if (exe_clear_tlb_i) begin
+        //     // valid_table <= 16'b0;
+        // end
         else if (first_done && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i) begin
             vir_page_number_table[vir_addr_i[15:12]] <= vir_addr_i[31:12];
             phy_page_number_table[vir_addr_i[15:12]] <= phy_addr_o[31:12];
