@@ -51,6 +51,7 @@ module mmu #(
     logic [DATA_WIDTH-1:0] pte_reg;
 
     logic clock_adr_comb;
+    logic vga_comb;         // 判断地址是否为vga地址
 
     logic is_page_fault;
     logic instruction_page_fault;
@@ -199,16 +200,17 @@ module mmu #(
 
     always_comb begin
         clock_adr_comb = vir_addr_i == 32'h0200bff8 || vir_addr_i == 32'h0200bffc || vir_addr_i == 32'h02004000 || vir_addr_i == 32'h02004004;
-        wb_cyc_o = page_en_i && privilidge_i == 2'b00 && ((~type_i) || (~clock_adr_comb && mem_en_i)) && (~wb_ack_i) && (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ~tlb_hit;
+        vga_comb = (vir_addr_i <= 32'h4007_5300) && (32'h4000_0000 <= vir_addr_i);
+        wb_cyc_o = page_en_i && privilidge_i == 2'b00 && ((~type_i) || (~clock_adr_comb && mem_en_i))  &&(~wb_ack_i) && (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ~tlb_hit && (~vga_comb);
         wb_stb_o = wb_cyc_o;
         wb_dat_o = {DATA_WIDTH{1'b0}};
         wb_sel_o = 4'b1111;
         wb_we_o = 1'b0;
         wb_adr_o = {DATA_WIDTH{1'b0}}; //default
 
-        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT || (type_i && (clock_adr_comb || (~mem_en_i))) || privilidge_i == 2'b11 || ~page_en_i || tlb_hit;
-        phy_addr_o = tlb_hit ? {phy_page_number_table[vir_addr_i[15:12]], vir_addr_i[11:0]} : (mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}});
-        mmu_busy_o = (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i && ~tlb_hit;
+        phy_ready_o = mmu_cstate == DONE || mmu_cstate == PAGE_FAULT || (type_i && (clock_adr_comb || (~mem_en_i))) || privilidge_i == 2'b11 || ~page_en_i || tlb_hit || vga_comb;
+        phy_addr_o = vga_comb ? vir_addr_i : (tlb_hit ? {phy_page_number_table[vir_addr_i[15:12]], vir_addr_i[11:0]} : (mmu_cstate == DONE ? {pte_reg[29:10], vir_addr_i[11:0]} : {DATA_WIDTH{1'b0}}));
+        mmu_busy_o = (mmu_cstate == PT_READ_1 || mmu_cstate == PT_READ_2) && ((~type_i) || (~clock_adr_comb && mem_en_i)) && privilidge_i == 2'b00 && page_en_i && ~tlb_hit && ~vga_comb;
 
         case (mmu_cstate)
             // only for sv32 page
